@@ -20,6 +20,30 @@ operating system it exits with an error.
 
 See `neofetch --help` or `man neofetch` for all options.
 
+## Custom ASCII art
+
+Replace the Apple logo with artwork saved in a multiline plain-text file:
+
+```sh
+./neofetch --ascii "$HOME/Pictures/my-art.txt"
+```
+
+To use it by default, edit `~/.config/neofetch/config.conf` (or
+`$XDG_CONFIG_HOME/neofetch/config.conf` if `XDG_CONFIG_HOME` is set):
+
+```sh
+image_backend="ascii"
+image_source="$HOME/Pictures/my-art.txt"
+```
+
+Artwork can contain the literal color placeholders `${c1}` through `${c6}`.
+Backslashes are interpreted as escape sequences: use `\\` for a literal `\`
+and only load artwork you trust.
+
+Use at least two lines; single-line artwork currently falls back to the bundled
+Apple logo. Image files such as PNG and JPEG are not supported. Artwork is omitted
+with `--stdout` or `--json`.
+
 ## Install
 
 ```sh

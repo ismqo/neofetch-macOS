@@ -2338,7 +2338,6 @@ err() {
 
 get_full_path() {
     # This function finds the absolute path from a relative one.
-    # For example "Pictures/Wallpapers" --> "/Users/dylan/Pictures/Wallpapers"
 
     # If the file exists in the current directory, stop here.
     [[ -f "${PWD}/${1}" ]] && { printf '%s\n' "${PWD}/${1}"; return; }
