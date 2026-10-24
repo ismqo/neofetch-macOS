@@ -1,71 +1,62 @@
 <p align="center"><img src="logo.svg" alt="macOS ASCII logo" width="300"></p>
 
-# Neofetch for macOS 
+# Neofetch for macOS
 
-A command-line system information tool for macOS, written in Bash 3.2+.
+macOS fork of [Neofetch](https://github.com/dylanaraps/neofetch) by Dylan Araps,
+maintained by **ismqo**. Shows OS, CPU, memory, disk, shell and local IP information.
+Requires macOS and Bash 3.2+.
 
-This is a variation of [Neofetch](https://github.com/dylanaraps/neofetch)
-by Dylan Araps, focused on macOS. It runs on the Bash that ships with macOS,
-needs no extra packages and makes no network requests. On any other
-operating system it exits with an error.
+## How this fork differs
+
+- macOS-only, with no extra packages or network requests.
+- Image/wallpaper display, public-IP and music lookups removed.
+- Hardened disk parsing and terminal output, optimized rendering, and regression tests.
+
+## Install / uninstall
+
+Run from this repository:
+
+```sh
+sudo make install       # installs the command and man page under /usr/local
+sudo make uninstall     # also deletes your ~/.config/neofetch and its backups
+```
+
+With `sudo`, cleanup targets the invoking user's default config directory.
+Custom `XDG_CONFIG_HOME` directories and backups beside custom `--config` files
+need manual cleanup.
 
 ## Usage
 
-```sh
-./neofetch              # logo + system summary
-./neofetch --stdout     # plain text
-./neofetch --json       # JSON output
-./neofetch uptime cpu   # only these fields
-```
-
-See `neofetch --help` or `man neofetch` for all options.
-
-## Custom ASCII art
-
-Replace the Apple logo with artwork saved in a multiline plain-text file:
+Use `neofetch` after installation, or `./neofetch` from this directory:
 
 ```sh
-./neofetch --ascii "$HOME/Pictures/my-art.txt"
+neofetch                                      # Apple logo + system summary
+neofetch --stdout                             # plain text, no artwork
+neofetch --json                               # JSON, no artwork
+neofetch uptime cpu                           # selected fields only
+neofetch --customize                           # show/hide, reorder and rename fields
+neofetch --ascii "$HOME/Pictures/my-art.txt"    # custom ASCII logo
+neofetch --off                                # hide the logo
+neofetch --gap 5                              # spacing between logo and information
+neofetch --config /path/to/config.conf         # load a trusted Bash config
 ```
 
-To use it by default, edit `~/.config/neofetch/config.conf` (or
-`$XDG_CONFIG_HOME/neofetch/config.conf` if `XDG_CONFIG_HOME` is set):
+More options: `neofetch --help` or `man neofetch`.
+
+## Custom ASCII
+
+Use trusted text files with at least two lines; single-line art falls back to the
+Apple logo. Backslashes are interpreted as escapes: write `\\` for a literal `\`.
+Optional color placeholders: `${c1}` through `${c6}`. PNG/JPEG images are unsupported.
+
+To keep custom art, set these in `~/.config/neofetch/config.conf`
+(or `$XDG_CONFIG_HOME/neofetch/config.conf` when set):
 
 ```sh
 image_backend="ascii"
 image_source="$HOME/Pictures/my-art.txt"
 ```
 
-Artwork can contain the literal color placeholders `${c1}` through `${c6}`.
-Backslashes are interpreted as escape sequences: use `\\` for a literal `\`
-and only load artwork you trust.
+## Tests and license
 
-Use at least two lines; single-line artwork currently falls back to the bundled
-Apple logo. Image files such as PNG and JPEG are not supported. Artwork is omitted
-with `--stdout` or `--json`.
-
-## Install
-
-```sh
-sudo make install       # /usr/local/bin and /usr/local/share/man
-sudo make uninstall     # also removes ~/.config/neofetch (config and its .bak)
-```
-
-`make uninstall` removes the per-user config of the user who ran `sudo`. If you
-set a custom `XDG_CONFIG_HOME`, `sudo` drops it; remove `$XDG_CONFIG_HOME/neofetch`
-by hand. A `.bak` written next to a file passed with `--config` is not removed.
-
-## Tests
-
-```sh
-make test                  # run every case in tests/cases.sh
-bash tests/run.sh disk     # run the cases whose name contains 'disk'
-UPDATE=1 bash tests/run.sh # rewrite tests/golden/ after an intended output change
-```
-
-The tests run neofetch with fake system tools (`tests/fakes/`) in a clean
-environment, so the expected output in `tests/golden/` is the same on every Mac.
-
-## License
-
-MIT. See [LICENSE.md](LICENSE.md).
+Run `make test` for the regression suite. Licensed under [MIT](LICENSE.md).
