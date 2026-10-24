@@ -1,0 +1,6 @@
+#!/bin/bash
+# Fake process list; no third-party window manager is running.
+case "$1" in
+    -e) printf '  PID TTY           TIME CMD\n    1 ??         0:10.00 /sbin/launchd\n  400 ??         1:00.00 /System/Library/WindowServer\n' ;;
+    *)  exit 1 ;;
+esac

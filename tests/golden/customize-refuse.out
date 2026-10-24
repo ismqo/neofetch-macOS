@@ -1,0 +1,13 @@
+neofetch: 'print_info()' in <sandbox>/home/config.conf has a line the editor can't represent:
+neofetch:   prin "Hello" "world"
+neofetch: Only 'info "Label" name' lines and comments are supported.
+neofetch: Edit the file by hand instead.
+exit=1
+--- config
+# print_info() with code the layout editor can't represent.
+memory_unit="gib"
+print_info() {
+    info title
+    prin "Hello" "world"
+}
+--- no backup

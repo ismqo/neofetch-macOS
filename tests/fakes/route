@@ -1,0 +1,2 @@
+#!/bin/bash
+printf '   route to: default\ndestination: default\n  interface: en1\n'

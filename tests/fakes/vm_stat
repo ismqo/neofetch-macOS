@@ -1,0 +1,12 @@
+#!/bin/bash
+cat <<'OUT'
+Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages free:                                5000.
+Pages active:                            200000.
+Pages inactive:                          190000.
+Pages speculative:                         4000.
+Pages throttled:                              0.
+Pages wired down:                         80000.
+Pages purgeable:                          10000.
+Pages occupied by compressor:             50000.
+OUT

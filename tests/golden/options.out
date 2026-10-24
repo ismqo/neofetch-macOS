@@ -1,0 +1,21 @@
+tester@testhost
+---------------
+OS: macOS Sequoia 15.1 24B83 arm64
+Host: Mac16,10
+Kernel: 24.1.0
+Uptime: 1d 2h 3m
+Packages: 4 (brew)
+Shell: zsh 5.9
+Resolution: 5120x2880@2x
+DE: Aqua
+WM: Quartz Compositor
+WM Theme: Blue (Dark)
+Terminal: Ghostty
+Terminal Font: Test Mono 13
+CPU: Apple M4 (10)
+GPU: Apple M4
+Memory: 6.41GiB / 16.00GiB
+Disk (/): 280G / 494G
+Local IP: 192.168.1.20
+
+exit=0

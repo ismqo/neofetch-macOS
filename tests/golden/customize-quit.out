@@ -1,0 +1,551 @@
+exit=0
+--- config
+# Lines to display, in order. 'info "Label" name' shows the value of
+# get_<name>; 'underline' and 'cols' are layout rows.
+print_info() {
+    info title
+    info underline
+
+    info "OS" distro
+    info "Host" model
+    info "Kernel" kernel
+    info "Uptime" uptime
+    info "Packages" packages
+    info "Shell" shell
+    info "Resolution" resolution
+    info "DE" de
+    info "WM" wm
+    info "WM Theme" wm_theme
+    info "Terminal" term
+    info "Terminal Font" term_font
+    info "CPU" cpu
+    info "GPU" gpu
+    info "Memory" memory
+
+    # info "GPU Driver" gpu_driver
+    info "Disk" disk
+    # info "Battery" battery
+    info "Local IP" local_ip
+    # info "Users" users
+    # info "Locale" locale
+
+    info cols
+}
+
+# Title
+
+
+# Hide/Show Fully qualified domain name.
+#
+# Default:  'off'
+# Values:   'on', 'off'
+# Flag:     --title_fqdn
+title_fqdn="off"
+
+
+# Kernel
+
+
+# Shorten the output of the kernel function.
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --kernel_shorthand
+#
+# Example:
+# on:  '24.1.0'
+# off: 'Darwin 24.1.0'
+kernel_shorthand="on"
+
+
+# Distro
+
+
+# Shorten the output of the distro function
+#
+# Default:  'off'
+# Values:   'on', 'tiny', 'off'
+# Flag:     --distro_shorthand
+#
+# Example:
+# on:   'macOS Sequoia 15.1 arm64'
+# tiny: 'macOS 15.1 arm64'
+# off:  'macOS Sequoia 15.1 24B83 arm64'
+distro_shorthand="off"
+
+# Show/Hide OS Architecture.
+# Show 'arm64' or 'x86_64' in 'OS:' output.
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --os_arch
+#
+# Example:
+# on:  'macOS Sequoia 15.1 24B83 arm64'
+# off: 'macOS Sequoia 15.1 24B83'
+os_arch="on"
+
+
+# Uptime
+
+
+# Shorten the output of the uptime function
+#
+# Default: 'on'
+# Values:  'on', 'tiny', 'off'
+# Flag:    --uptime_shorthand
+#
+# Example:
+# on:   '2 days, 10 hours, 3 mins'
+# tiny: '2d 10h 3m'
+# off:  '2 days, 10 hours, 3 minutes'
+uptime_shorthand="on"
+
+
+# Memory
+
+
+# Show memory percentage in output.
+#
+# Default: 'off'
+# Values:  'on', 'off'
+# Flag:    --memory_percent
+#
+# Example:
+# on:   '1801MiB / 7881MiB (22%)'
+# off:  '1801MiB / 7881MiB'
+memory_percent="off"
+
+# Change memory output unit.
+#
+# Default: 'mib'
+# Values:  'kib', 'mib', 'gib'
+# Flag:    --memory_unit
+#
+# Example:
+# kib  '1020928KiB / 7117824KiB'
+# mib  '1042MiB / 6951MiB'
+# gib: ' 0.98GiB / 6.79GiB'
+memory_unit="mib"
+
+
+# Packages
+
+
+# Show/Hide Package Manager names.
+#
+# Default: 'on'
+# Values:  'on', 'tiny' 'off'
+# Flag:    --package_managers
+#
+# Example:
+# on:   '98 (brew), 4 (port)'
+# tiny: '102 (brew, port)'
+# off:  '102'
+package_managers="on"
+
+
+# Shell
+
+
+# Show the path to $SHELL
+#
+# Default: 'off'
+# Values:  'on', 'off'
+# Flag:    --shell_path
+#
+# Example:
+# on:  '/bin/zsh'
+# off: 'zsh'
+shell_path="off"
+
+# Show $SHELL version
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --shell_version
+#
+# Example:
+# on:  'zsh 5.9'
+# off: 'zsh'
+shell_version="on"
+
+
+# CPU
+
+
+# Enable/Disable CPU brand in output.
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --cpu_brand
+#
+# Example:
+# on:   'Intel i7-8700B (12) @ 3.20GHz'
+# off:  'i7-8700B (12) @ 3.20GHz'
+cpu_brand="on"
+
+# CPU Speed
+# Hide/Show CPU speed (Intel Macs report it as part of the CPU name).
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --cpu_speed
+#
+# Example:
+# on:  'Intel i7-8700B (12) @ 3.20GHz'
+# off: 'Intel i7-8700B (12)'
+cpu_speed="on"
+
+# CPU Cores
+# Display CPU cores in output
+#
+# Default: 'logical'
+# Values:  'logical', 'physical', 'off'
+# Flag:    --cpu_cores
+#
+# Example:
+# logical:  'Apple M4 (10)' (All virtual cores)
+# physical: 'Intel i7-8700B (6) @ 3.20GHz' (All physical cores)
+# off:      'Apple M4'
+cpu_cores="logical"
+
+
+# GPU
+
+
+# Enable/Disable GPU Brand
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --gpu_brand
+#
+# Example:
+# on:  'AMD Radeon Pro 5500M'
+# off: 'Radeon Pro 5500M'
+gpu_brand="on"
+
+
+# Resolution
+
+
+# Display refresh rate next to each monitor
+# Default: 'off'
+# Values:  'on', 'off'
+# Flag:    --refresh_rate
+#
+# Example:
+# on:  '5120x2880@2x @ 60Hz'
+# off: '5120x2880@2x'
+refresh_rate="off"
+
+
+# IP Address
+
+
+# Local IP interface
+#
+# Default: 'auto' (interface of default route)
+# Values:  'auto', 'en0', 'en1'
+# Flag:    --ip_interface
+local_ip_interface=('auto')
+
+
+# Disk
+
+
+# Which disks to display.
+# The values can be any /dev/diskXsY, mount point or directory.
+# NOTE: By default we only show the disk info for '/'. On APFS (macOS 10.15+)
+#       '/' is the read-only system volume; use '/System/Volumes/Data' to see
+#       how much space your own data uses.
+#
+# Default: '/'
+# Values:  '/', '/dev/diskXsY', '/path/to/drive'.
+# Flag:    --disk_show
+#
+# Example:
+# disk_show=('/' '/Volumes/Backup'):
+#      'Disk (/): 74G / 118G (66%)'
+#      'Disk (/Volumes/Backup): 823G / 893G (93%)'
+#
+# disk_show=('/'):
+#      'Disk (/): 74G / 118G (66%)'
+#
+disk_show=('/')
+
+# Disk subtitle.
+# What to append to the Disk subtitle.
+#
+# Default: 'mount'
+# Values:  'mount', 'name', 'dir', 'none'
+# Flag:    --disk_subtitle
+#
+# Example:
+# name:   'Disk (/dev/disk3s1s1): 74G / 118G (66%)'
+#
+# mount:  'Disk (/): 74G / 118G (66%)'
+#         'Disk (/Volumes/Backup): 74G / 118G (66%)'
+#
+# dir:    'Disk (/): 74G / 118G (66%)'
+#         'Disk (Backup): 74G / 118G (66%)'
+#
+# none:   'Disk: 74G / 118G (66%)'
+disk_subtitle="mount"
+
+# Disk percent.
+# Show/Hide disk percent.
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --disk_percent
+#
+# Example:
+# on:  'Disk (/): 74G / 118G (66%)'
+# off: 'Disk (/): 74G / 118G'
+disk_percent="on"
+
+
+# Text Colors
+
+
+# Text Colors
+#
+# Default:  'distro'
+# Values:   'distro', 'num' 'num' 'num' 'num' 'num' 'num'
+# Flag:     --colors
+#
+# Each number represents a different part of the text in
+# this order: 'title', '@', 'underline', 'subtitle', 'colon', 'info'
+#
+# Example:
+# colors=(distro)      - Text is colored based on the macOS logo colors.
+# colors=(4 6 1 8 8 6) - Text is colored in the order above.
+colors=(distro)
+
+
+# Text Options
+
+
+# Toggle bold text
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --bold
+bold="on"
+
+# Enable/Disable Underline
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --underline
+underline_enabled="on"
+
+# Underline character
+#
+# Default:  '-'
+# Values:   'string'
+# Flag:     --underline_char
+underline_char="-"
+
+
+# Info Separator
+# Replace the default separator with the specified string.
+#
+# Default:  ':'
+# Flag:     --separator
+#
+# Example:
+# separator="->":   'Shell-> bash'
+# separator=" =":   'WM = yabai'
+separator=":"
+
+
+# Color Blocks
+
+
+# Color block range
+# The range of colors to print.
+#
+# Default:  '0', '15'
+# Values:   'num'
+# Flag:     --block_range
+#
+# Example:
+#
+# Display colors 0-7 in the blocks.  (8 colors)
+# neofetch --block_range 0 7
+#
+# Display colors 0-15 in the blocks. (16 colors)
+# neofetch --block_range 0 15
+block_range=(0 15)
+
+# Toggle color blocks
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --color_blocks
+color_blocks="on"
+
+# Color block width in spaces
+#
+# Default:  '3'
+# Values:   'num'
+# Flag:     --block_width
+block_width=3
+
+# Color block height in lines
+#
+# Default:  '1'
+# Values:   'num'
+# Flag:     --block_height
+block_height=1
+
+# Color Alignment
+#
+# Default: 'auto'
+# Values: 'auto', 'num'
+# Flag: --col_offset
+#
+# Number specifies how far from the left side of the terminal (in spaces) to
+# begin printing the columns, in case you want to e.g. center them under your
+# text.
+# Example:
+# col_offset="auto" - Default behavior of neofetch
+# col_offset=7      - Leave 7 spaces then print the colors
+col_offset="auto"
+
+# Progress Bars
+
+
+# Bar characters
+#
+# Default:  '-', '='
+# Values:   'string', 'string'
+# Flag:     --bar_char
+#
+# Example:
+# neofetch --bar_char 'elapsed' 'total'
+# neofetch --bar_char '-' '='
+bar_char_elapsed="-"
+bar_char_total="="
+
+# Toggle Bar border
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --bar_border
+bar_border="on"
+
+# Progress bar length in spaces
+# Number of chars long to make the progress bars.
+#
+# Default:  '15'
+# Values:   'num'
+# Flag:     --bar_length
+bar_length=15
+
+# Progress bar colors
+# When set to distro, uses the macOS logo colors.
+#
+# Default:  'distro', 'distro'
+# Values:   'distro', 'num'
+# Flag:     --bar_colors
+#
+# Example:
+# neofetch --bar_colors 3 4
+# neofetch --bar_colors distro 5
+bar_color_elapsed="distro"
+bar_color_total="distro"
+
+
+# Info display
+# Display a bar with the info.
+#
+# Default: 'off'
+# Values:  'bar', 'infobar', 'barinfo', 'off'
+# Flags:   --memory_display
+#          --battery_display
+#          --disk_display
+#
+# Example:
+# bar:     '[---=======]'
+# infobar: 'info [---=======]'
+# barinfo: '[---=======] info'
+# off:     'info'
+memory_display="off"
+battery_display="off"
+disk_display="off"
+
+
+# Logo Settings
+
+
+# Logo display.
+#
+# Default:  'ascii'
+# Values:   'ascii', 'off'
+# Flag:     --backend
+image_backend="ascii"
+
+# Logo Source
+#
+# Which ascii art to display.
+#
+# Default:  'auto'
+# Values:   'auto', '/path/to/ascii', 'command output'
+#           (neofetch --ascii "$(fortune | cowsay -W 30)")
+# Flag:     --source
+#
+# NOTE: 'auto' shows the bundled macOS logo.
+image_source="auto"
+
+
+# Ascii Options
+
+
+# Ascii art
+# Which bundled ascii art to display.
+#
+# Default: 'auto'
+# Values:  'auto', 'macos', 'mac_small'
+# Flag:    --ascii_distro
+ascii_distro="auto"
+
+# Ascii Colors
+#
+# Default:  'distro'
+# Values:   'distro', 'num' 'num' 'num' 'num' 'num' 'num'
+# Flag:     --ascii_colors
+#
+# Example:
+# ascii_colors=(distro)      - Ascii is colored using the macOS logo colors.
+# ascii_colors=(4 6 1 8 8 6) - Ascii is colored using these colors.
+ascii_colors=(distro)
+
+# Bold ascii logo
+# Whether or not to bold the ascii logo.
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --ascii_bold
+ascii_bold="on"
+
+
+# Gap between logo and text
+#
+# Default: '3'
+# Values:  'num', '-num'
+# Flag:    --gap
+gap=3
+
+
+# Misc Options
+
+# Stdout mode
+# Turn off all colors and disables the ascii logo.
+# Useful for piping into another command.
+# Default: 'off'
+# Values: 'on', 'off'
+stdout="off"
+--- no backup

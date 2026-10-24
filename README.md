@@ -31,6 +31,17 @@ sudo make uninstall     # also removes ~/.config/neofetch (config and its .bak)
 set a custom `XDG_CONFIG_HOME`, `sudo` drops it; remove `$XDG_CONFIG_HOME/neofetch`
 by hand. A `.bak` written next to a file passed with `--config` is not removed.
 
+## Tests
+
+```sh
+make test                  # run every case in tests/cases.sh
+bash tests/run.sh disk     # run the cases whose name contains 'disk'
+UPDATE=1 bash tests/run.sh # rewrite tests/golden/ after an intended output change
+```
+
+The tests run neofetch with fake system tools (`tests/fakes/`) in a clean
+environment, so the expected output in `tests/golden/` is the same on every Mac.
+
 ## License
 
 MIT. See [LICENSE.md](LICENSE.md).

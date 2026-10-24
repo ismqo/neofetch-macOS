@@ -1,0 +1,25 @@
+{
+    "OS": "macOS Sequoia 15.1 24B83 arm64",
+    "Host": "Mac16,10",
+    "Kernel": "24.1.0",
+    "Uptime": "1 day, 2 hours, 3 mins",
+    "Packages": "4 (brew)",
+    "Shell": "zsh 5.9",
+    "Resolution": "5120x2880@2x",
+    "DE": "Aqua",
+    "WM": "Quartz Compositor",
+    "WM Theme": "Blue (Dark)",
+    "Terminal": "Ghostty",
+    "Terminal Font": "Test Mono 13",
+    "CPU": "Apple M4 (10)",
+    "GPU": "Apple M4",
+    "Memory": "6562MiB / 16384MiB",
+    "GPU Driver": "macOS Default Graphics Driver",
+    "Disk (/)": "280G / 494G (57%)",
+    "Battery": "87%",
+    "Local IP": "192.168.1.20",
+    "Users": "tester",
+    "Locale": "en_US.UTF-8",
+    "Version": "7.1.0"
+}
+exit=0

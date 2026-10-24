@@ -1,0 +1,4 @@
+#!/bin/bash
+# Fake GPU name from IOKit; empty on Intel or when FAKE_IOREG=empty.
+[[ "$FAKE_ARCH" == intel || "$FAKE_IOREG" == empty ]] && exit 0
+printf '+-o AGXAcceleratorG16G  <class AGXAcceleratorG16G>\n    {\n      "gpu-core-count" = 10\n      "model" = "%s"\n    }\n' "${FAKE_GPU:-Apple M4}"

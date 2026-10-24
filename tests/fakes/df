@@ -1,0 +1,11 @@
+#!/bin/bash
+# Fake 'df -P -H <mount>...'. Mount points are printed as given, so names
+# with spaces (FAKE_DISK tests) reach neofetch exactly like the real df.
+shift 2
+echo 'Filesystem     Size   Used  Avail Capacity  Mounted on'
+for mount; do
+    case $mount in
+        /System/Volumes/Data) echo "/dev/disk3s5   494G   280G   180G    61%    $mount" ;;
+        *)                    echo "/dev/disk5s1   2.0T   500G   1.5T    25%    $mount" ;;
+    esac
+done

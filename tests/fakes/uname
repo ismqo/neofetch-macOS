@@ -1,0 +1,4 @@
+#!/bin/bash
+# Fake 'uname -srm'. FAKE_ARCH=intel switches to an Intel Mac.
+[[ "$FAKE_ARCH" == intel ]] && arch=x86_64 || arch=arm64
+printf 'Darwin 24.1.0 %s\n' "$arch"

@@ -1,0 +1,4 @@
+#!/bin/bash
+# Fake Foundation volume capacity query: total and available bytes.
+[[ "$1" == -l ]] && { echo '494000000000 214000000000'; exit; }
+exit 1

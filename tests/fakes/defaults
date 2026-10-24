@@ -1,0 +1,6 @@
+#!/bin/bash
+case "$*" in
+    "read -g AppleInterfaceStyle") echo Dark ;;
+    "read -g AppleAccentColor")    echo 4 ;;
+    *) exit 1 ;;
+esac

@@ -1,0 +1,18 @@
+#!/bin/bash
+# Fake 'system_profiler SPDisplaysDataType'.
+gpu="${FAKE_GPU:-Apple M4}"
+[[ "$FAKE_ARCH" == intel ]] && gpu="Intel UHD Graphics 630"
+cat <<OUT
+Graphics/Displays:
+
+    ${gpu}:
+
+      Chipset Model: ${gpu}
+      Type: GPU
+      Bus: Built-In
+      Displays:
+        LS27D70xE:
+          Resolution: 5120 x 2880 (5K/UHD+ - Ultra High Definition Plus)
+          UI Looks like: 2560 x 1440 @ 60.00Hz
+          Main Display: Yes
+OUT
