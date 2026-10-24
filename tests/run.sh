@@ -63,18 +63,24 @@ neofetch() {
 }
 
 check() {
-    # check NAME: compare stdin with tests/golden/NAME.out.
-    local name=$1 actual
-    actual="$(cat)"
+    # check NAME: compare stdin byte for byte with tests/golden/NAME.out.
+    # The '.' sentinel keeps trailing newlines, which $(...) would strip.
+    local name=$1 actual expected
+    actual="$(cat; printf .)"
+    actual="${actual%.}"
 
     if [[ "${UPDATE:-}" ]]; then
-        printf '%s\n' "$actual" > "$golden/$name.out"
+        printf '%s' "$actual" > "$golden/$name.out"
         printf 'updated  %s\n' "$name"
         return
     fi
 
-    if [[ -f "$golden/$name.out" ]] &&
-       [[ "$actual" == "$(cat "$golden/$name.out")" ]]; then
+    if [[ -f "$golden/$name.out" ]]; then
+        expected="$(cat "$golden/$name.out"; printf .)"
+        expected="${expected%.}"
+    fi
+
+    if [[ -f "$golden/$name.out" && "$actual" == "$expected" ]]; then
         ((pass++))
         printf 'ok       %s\n' "$name"
     else
@@ -82,7 +88,7 @@ check() {
         failed+=("$name")
         printf 'FAIL     %s\n' "$name"
         if [[ -f "$golden/$name.out" ]]; then
-            diff <(cat "$golden/$name.out") <(printf '%s\n' "$actual") | head -20 | sed 's/^/         /'
+            diff <(cat "$golden/$name.out") <(printf '%s' "$actual") | head -20 | sed 's/^/         /'
         else
             printf '         missing %s\n' "$golden/$name.out"
         fi
@@ -148,3 +154,9 @@ customize_case() {
 
 printf '\n%s passed, %s failed\n' "$pass" "$fail"
 ((fail == 0)) || { printf 'failed: %s\n' "${failed[*]}"; exit 1; }
+
+# A run that checked nothing (for example a mistyped filter) is not a pass.
+if [[ -z "${UPDATE:-}" ]] && ((pass == 0)); then
+    printf 'no case matched %s\n' "${filter:-(no filter)}"
+    exit 1
+fi
