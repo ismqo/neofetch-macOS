@@ -23,15 +23,15 @@ need manual cleanup.
 Use `neofetch` after installation, or `./neofetch` from this directory:
 
 ```sh
-neofetch                                      # Apple logo + system summary
-neofetch --stdout                             # plain text, no artwork
-neofetch --json                               # JSON, no artwork
-neofetch uptime cpu                           # selected fields only
-neofetch --customize                           # show/hide, reorder and rename fields
+neofetch                                        # Apple logo + system summary
+neofetch --stdout                               # plain text, no artwork
+neofetch --json                                 # JSON, no artwork
+neofetch uptime cpu                             # selected fields only
+neofetch --customize                            # show/hide, reorder and rename fields
 neofetch --ascii "$HOME/Pictures/my-art.txt"    # custom ASCII logo
-neofetch --off                                # hide the logo
-neofetch --gap 5                              # spacing between logo and information
-neofetch --config /path/to/config.conf         # load a trusted Bash config
+neofetch --off                                  # hide the logo
+neofetch --gap 5                                # spacing between logo and information
+neofetch --config /path/to/config.conf          # load a trusted Bash config
 ```
 
 More options: `neofetch --help` or `man neofetch`.
