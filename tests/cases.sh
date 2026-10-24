@@ -50,3 +50,10 @@ run_case escape-title               $'USER=te\e[2Jster' 'HOSTNAME=host\e[31m' --
 run_case escape-colored-bars        'FAKE_GPU=Apple \e[31mM4' --memory_display infobar --disk_display barinfo
 run_case escape-tab-in-disk-name    --stdout disk --disk_show $'/Volumes/Tab\tName'
 run_case escape-title-width         'HOSTNAME=host\name' --stdout --config "$tests/configs/title-underline.conf"
+
+# The Shell field reports the login shell's version, not the bash running neofetch.
+run_case shell-bash-version         "SHELL=$fakes/shells/bash" shell
+run_case shell-bash-path            "SHELL=$fakes/shells/bash" shell --shell_path on
+
+# An interrupted --customize save leaves no temporary file and the config intact.
+interrupt_case customize-interrupted    slow-validation.conf

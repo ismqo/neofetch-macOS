@@ -1,0 +1,6 @@
+#!/bin/sh
+# Fake login shell named 'bash' (kept off PATH so it never replaces the real
+# bash): reports a different version than the bash running neofetch.
+case "$2" in
+    *BASH_VERSION*) printf %s '5.2.37(1)-release' ;;
+esac

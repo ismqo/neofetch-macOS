@@ -33,7 +33,6 @@ version=7.1.0
 # Fallback to a value of '5' for shells which support bash
 # but do not set the 'BASH_' shell variables.
 bash_version=${BASH_VERSINFO[0]:-5}
-shopt -s eval_unsafe_arith &>/dev/null
 
 sys_locale=${LANG:-C}
 case $sys_locale in
@@ -955,10 +954,11 @@ get_shell() {
 
     case ${shell_name:=${SHELL##*/}} in
         bash)
-            [[ $BASH_VERSION ]] ||
-                BASH_VERSION=$("$SHELL" -c "printf %s \"\$BASH_VERSION\"")
-
-            shell+=${BASH_VERSION/-*}
+            # Ask the login shell: $BASH_VERSION here is the version of the
+            # bash running neofetch, which is often not the user's shell.
+            local login_version
+            login_version=$("$SHELL" -c 'printf %s "$BASH_VERSION"' 2>/dev/null)
+            shell+=${login_version/-*}
         ;;
 
         sh|ash|dash|es) ;;
@@ -2600,6 +2600,9 @@ layout_save() {
     tmp="$(mktemp "${TMPDIR:-/tmp}/neofetch-layout.XXXXXX")" ||
         { layout_msg="Couldn't create a temporary file; nothing was saved."; return 1; }
 
+    # Removed by layout_leave if the save is interrupted.
+    layout_tmp=$tmp
+
     layout_splice "$file" > "$tmp"
 
     block_lines=()
@@ -2726,6 +2729,10 @@ layout_key() {
 layout_leave() {
     printf '\e[?25h'
     [[ -t 1 ]] && printf '\e[?1049l'
+
+    # An interrupted save leaves its temporary file behind.
+    [[ "$layout_tmp" ]] && rm -f "$layout_tmp"
+    layout_tmp=
 }
 
 customize_layout() {
@@ -2752,8 +2759,11 @@ customize_layout() {
 
     layout_load "$layout_file" || return 1
 
+    # Restore the screen and remove an unfinished save on any exit.
     trap 'layout_leave' EXIT
     trap 'layout_leave; trap - INT; kill -INT $$' INT
+    trap 'layout_leave; trap - TERM; kill -TERM $$' TERM
+    trap 'layout_leave; trap - HUP; kill -HUP $$' HUP
     [[ -t 1 ]] && printf '\e[?1049h'
     printf '\e[?25l'
 
@@ -2798,7 +2808,7 @@ customize_layout() {
     done
 
     layout_leave
-    trap - EXIT INT
+    trap - EXIT INT TERM HUP
 
     if [[ "$saved" ]]; then
         printf '%s\n' "Saved the layout to ${layout_file} (backup: ${layout_file}.bak)."

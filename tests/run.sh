@@ -25,8 +25,9 @@ sandbox="$(cd "$sandbox" && pwd -P)"
 
 # Basic utilities neofetch may call; anything else is unavailable on purpose.
 mkdir -p "$sandbox/utils"
-for tool in awk bash basename cat cmp cp cut dirname env grep head ls mkdir \
-            mktemp mv readlink rm sed sleep sort stat tail tr tty uniq wc; do
+for tool in awk bash basename cat chmod cmp cp cut dirname env find grep head id ls \
+            make mkdir mkfifo mktemp mv readlink rm sed sleep sort stat tail tr \
+            tty uniq wc; do
     path="$(PATH=/usr/bin:/bin command -v "$tool")" &&
         ln -s "$path" "$sandbox/utils/$tool"
 done
@@ -53,7 +54,9 @@ neofetch() {
         shift
     done
 
-    env -i \
+    # With neofetch_exec set (in a background subshell), replace that
+    # subshell so its PID is neofetch's own.
+    ${neofetch_exec:+exec} env -i \
         HOME="$sandbox/home" USER=tester HOSTNAME=testhost \
         SHELL="$fakes/zsh" TERM=xterm-256color TERM_PROGRAM=ghostty \
         GHOSTTY_BIN_DIR="$fakes" LANG=en_US.UTF-8 \
@@ -152,6 +155,45 @@ customize_case() {
         fi
         ls -A "$sandbox/tmp" | sed 's/^/--- leftover temp file: /'
     } | sed -e "s|$sandbox|<sandbox>|g" -e "s|$root|<repo>|g")
+}
+
+interrupt_case() {
+    # interrupt_case NAME CONFIG: start a --customize save, send SIGTERM while
+    # the new config is being checked, and report what was left behind.
+    # (SIGINT can't be used: bash ignores it in background jobs.)
+    local name=$1 config=$2 pid i
+    [[ -z "$filter" || "$name" == *"$filter"* ]] || return 0
+
+    reset_home
+    rm -f "$sandbox/slow"
+    local conf="$sandbox/home/config.conf"
+    cp "$tests/configs/$config" "$conf"
+    cp "$conf" "$sandbox/home/original"
+    mkfifo "$sandbox/keys"
+
+    neofetch_exec=1 neofetch --config "$conf" --customize < "$sandbox/keys" >/dev/null 2>&1 &
+    pid=$!
+    exec 7> "$sandbox/keys"
+    sleep 0.5
+    touch "$sandbox/slow"
+    printf 's' >&7
+
+    # Wait for the save's temporary file, then interrupt.
+    for ((i = 0; i < 50; i++)); do
+        ls "$sandbox/tmp" | grep -q . && break
+        sleep 0.1
+    done
+    kill -TERM "$pid" 2>/dev/null
+    wait "$pid" 2>/dev/null
+    exec 7>&-
+    rm -f "$sandbox/keys" "$sandbox/slow"
+
+    check "$name" < <({
+        cmp -s "$conf" "$sandbox/home/original" &&
+            echo "--- config unchanged" || echo "--- config CHANGED"
+        ls -A "$sandbox/tmp" | sed 's/^/--- leftover temp file: /'
+        true
+    })
 }
 
 . "$tests/cases.sh"
