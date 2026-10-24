@@ -1600,6 +1600,7 @@ get_disk() {
                 disk_sub=$df_mount
             ;;
         esac
+        disk_sub="${disk_sub//[$'\t\n']/ }"
         disk_sub="${disk_sub//[[:cntrl:]]/}"
 
         # Append '(disk mount point)' to the subtitle.
@@ -1695,9 +1696,12 @@ record() {
 }
 
 add_result() {
-    # Used by collectors that produce several lines (disk, local_ip). Their
-    # labels include detected text such as mount points.
-    record line "$1" "${2//[[:cntrl:]]/}" "$3" "$4" both
+    # Used by collectors that produce several lines (disk, local_ip). The
+    # value is detected text; detected parts of the label (mount points) are
+    # cleaned by the collector, so config colors in the label survive.
+    # Tabs and newlines become spaces; other control characters are dropped.
+    local value="${2//[$'\t\n']/ }"
+    record line "$1" "${value//[[:cntrl:]]/}" "$3" "$4" both
     prin=1
 }
 
@@ -1849,11 +1853,12 @@ render_json() {
 }
 
 render_text() {
-    local i value
+    local i label value
 
     for ((i = 0; i < rec_n; i++)); do
         case ${rec_kind[i]} in
             title)
+                # Detected names: backslashes print as themselves ('\0134').
                 local user_out="${rec_label[i]//\\/\\0134}" host_out="${rec_value[i]//\\/\\0134}"
                 render_line "" \
                     "${title_color}${bold}${user_out}${at_color}@${title_color}${bold}${host_out}"
@@ -1864,37 +1869,39 @@ render_text() {
             raw)       printf '%b' "${rec_value[i]}" ;;
 
             line)
+                label="${rec_label[i]}"
                 value="${rec_value[i]}"
+
+                # Detected text must print as itself, not as '%b' escapes:
+                # its backslashes become '\0134', which '%b' prints as '\'.
+                # This happens before the bar adds neofetch's own escapes.
+                case ${rec_plain[i]} in
+                    value) value="${value//\\/\\0134}" ;;
+                    both)  value="${value//\\/\\0134}"; label="${label//\\/\\0134}" ;;
+                esac
+
                 [[ "${rec_bar[i]}" ]] && value="$(apply_bar "$value" "${rec_bar[i]}" "${rec_mode[i]}")"
-                render_line "${rec_label[i]}" "$value" "${rec_plain[i]}"
+                render_line "$label" "$value"
             ;;
         esac
     done
 }
 
 render_line() {
-    # label value [plain]: 'plain' ('value' or 'both') marks detected text,
-    # whose backslashes print as themselves instead of '%b' escapes. The
-    # width is measured on the text as shown.
-    local string shown subtitle_color="$subtitle_color" label=$1 value=$2
-
-    case $3 in
-        value) value="${value//\\/\\0134}" ;;
-        both)  value="${value//\\/\\0134}"; label="${label//\\/\\0134}" ;;
-    esac
+    local string subtitle_color="$subtitle_color"
 
     # If $2 doesn't exist we format $1 as info.
     if [[ "$(trim "$1")" && "$2" ]]; then
-        string="${label}${value:+: $value}"
-        shown="${1}${2:+: $2}"
+        string="${1}${2:+: $2}"
     else
-        string="${value:-$label}"
-        shown="${2:-$1}"
+        string="${2:-$1}"
         subtitle_color="$info_color"
     fi
 
     string="$(trim "${string//$'\e[0m'}")"
-    length="$(strip_sequences "$(trim "${shown//$'\e[0m'}")")"
+
+    # Measure the text as shown: an escaped backslash ('\0134') is one '\'.
+    length="$(strip_sequences "${string//\\0134/\\}")"
     str_width "$length"
     length="$str_width_out"
 

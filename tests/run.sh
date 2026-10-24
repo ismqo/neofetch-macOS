@@ -106,7 +106,7 @@ run_case() {
     reset_home
     check "$name" < <({ neofetch "$@" 2>&1; printf "exit=%s\n" "$?"; 
         [[ -e "$sandbox/INJECTED" ]] && echo "--- a command injected through the output ran"; } |
-        sed "s|$sandbox|<sandbox>|g")
+        sed -e "s|$sandbox|<sandbox>|g" -e "s|$root|<repo>|g")
 }
 
 config_case() {
@@ -119,7 +119,7 @@ config_case() {
     cp "$tests/configs/$config" "$sandbox/home/config.conf"
     check "$name" < <({ neofetch --config "$sandbox/home/config.conf" "$@" 2>&1; printf "exit=%s\n" "$?"; 
         [[ -e "$sandbox/INJECTED" ]] && echo "--- a command injected through the output ran"; } |
-        sed "s|$sandbox|<sandbox>|g")
+        sed -e "s|$sandbox|<sandbox>|g" -e "s|$root|<repo>|g")
 }
 
 customize_case() {
@@ -151,7 +151,7 @@ customize_case() {
             echo "--- no backup"
         fi
         ls -A "$sandbox/tmp" | sed 's/^/--- leftover temp file: /'
-    } | sed "s|$sandbox|<sandbox>|g")
+    } | sed -e "s|$sandbox|<sandbox>|g" -e "s|$root|<repo>|g")
 }
 
 . "$tests/cases.sh"

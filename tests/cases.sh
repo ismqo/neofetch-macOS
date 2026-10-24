@@ -47,3 +47,6 @@ run_case escape-backslash-json      'FAKE_GPU=Apple \e[31mM4' --json
 run_case escape-colored             'FAKE_GPU=Apple \e[31mM4'
 run_case escape-disk-name           --stdout disk --disk_show $'/Volumes/E\e[2Jvil\\e[31m'
 run_case escape-title               $'USER=te\e[2Jster' 'HOSTNAME=host\e[31m' --stdout title
+run_case escape-colored-bars        'FAKE_GPU=Apple \e[31mM4' --memory_display infobar --disk_display barinfo
+run_case escape-tab-in-disk-name    --stdout disk --disk_show $'/Volumes/Tab\tName'
+run_case escape-title-width         'HOSTNAME=host\name' --stdout --config "$tests/configs/title-underline.conf"

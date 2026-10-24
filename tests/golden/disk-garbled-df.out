@@ -19,6 +19,6 @@ Local IP: 192.168.1.20
 
 [!] Disk: Couldn't read the df line 'garbled output'.
 [!] Info: Couldn't detect Disk.
-[!] Neofetch command: /Users/ismaqo/Documents/Git/neofetch-macOS/neofetch -v --stdout
+[!] Neofetch command: <repo>/neofetch -v --stdout
 [!] Neofetch version: 7.1.0
 [mexit=0
