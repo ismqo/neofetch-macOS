@@ -23,7 +23,7 @@ Branch: fix/audit-hardening (base: main a1cf6c0). Delivery: ask-on-risk. Test ru
 - T3 [S3] inline — escape sanitization. Status: done (RED: ESC bytes in 5 cases; GREEN: 32/32; colored output unchanged).
 - T4 [S4] inline — subshell reduction. Status: done (35/35 identical; --stdout 250->221ms, logo 253->215ms, cheap fields 74->47ms).
 - T5 [S5] inline — small items. Status: done (d67afdd, a37d5cf; RED shown on old code for shell + interrupt; 41/41).
-- T6 [S1-S5] delegated verify at feature end (Risk items 2/3/5). Status: pending.
+- T6 [S1-S5] delegated verify at feature end (Risk items 2/3/5). Status: done — S1-S5 met; 1 blocker (B1: config \e colors on disk labels printed literally) fixed in 41d1f3c and rechecked.
 
 Route: all inline — one file (`neofetch`) shared by every unit, so no parallel writers.
 
@@ -36,3 +36,7 @@ Route: all inline — one file (`neofetch`) shared by every unit, so no parallel
   RDD approved), 6756e58 (escape-before-bar fix; RDD declined), 09376fe (perf; under budget),
   d67afdd (shell + interrupt; slice RDD declined), a37d5cf (Makefile; RDD declined).
   Suite: 41/41. Timing: --stdout 250->221ms, logo 253->215ms.
+- L3: Verifier: S1-S5 met; real-machine smoke identical to baseline (--stdout 0.24s -> 0.17s).
+  B1 fixed in 41d1f3c (RDD declined), recheck passed, 42/42. Advisories left: `XDG_CONFIG_HOME=/`
+  prints a misleading "not an absolute path" skip (harmless); sudo cleanup skips user names outside
+  [A-Za-z0-9._-] (fails safe); `$(strip_sequences ...)` no longer prints (internal helper).
