@@ -63,3 +63,7 @@ interrupt_case customize-interrupted    slow-validation.conf
 make_case uninstall
 make_case uninstall-bad-user            'SUDO_USER=a;b'
 make_case uninstall-relative-xdg        XDG_CONFIG_HOME=relative/dir
+
+# Config labels keep their '\e' colors on disk lines; only the detected mount
+# point is escaped.
+config_case disk-label-escape       disk-label-escape.conf --stdout --disk_show / '/Volumes/a\e[32mb'

@@ -1605,9 +1605,9 @@ get_disk() {
 
         # Append '(disk mount point)' to the subtitle.
         if [[ "$subtitle" ]]; then
-            add_result "$subtitle${disk_sub:+ ($disk_sub)}" "$disk" "$disk_perc 100" "$disk_display"
+            add_result "$subtitle${disk_sub:+ ($disk_sub)}" "$disk" "$disk_perc 100" "$disk_display" "$disk_sub"
         else
-            add_result "$disk_sub" "$disk" "$disk_perc 100" "$disk_display"
+            add_result "$disk_sub" "$disk" "$disk_perc 100" "$disk_display" "$disk_sub"
         fi
     done
 }
@@ -1681,9 +1681,10 @@ get_process_name() {
 rec_n=0
 
 record() {
-    # kind label value bar_data display_mode plain
-    # 'plain' names the parts holding detected text ('value' or 'both'),
-    # which render as literal text rather than '%b' escapes.
+    # kind label value bar_data display_mode plain detail
+    # 'plain=value' marks the value as detected text, and 'detail' is the
+    # detected part of the label (a mount point); both render as literal text
+    # rather than '%b' escapes, while the rest of the label is config text.
     # With 'rec_at' set, fill that reserved slot instead of appending.
     local i=${rec_at:-$rec_n}
     rec_kind[i]="$1"
@@ -1692,16 +1693,18 @@ record() {
     rec_bar[i]="$4"
     rec_mode[i]="$5"
     rec_plain[i]="$6"
+    rec_detail[i]="$7"
     [[ "$rec_at" ]] || ((rec_n++))
 }
 
 add_result() {
-    # Used by collectors that produce several lines (disk, local_ip). The
-    # value is detected text; detected parts of the label (mount points) are
-    # cleaned by the collector, so config colors in the label survive.
+    # add_result label value bar_data display_mode [detail]: used by
+    # collectors that produce several lines (disk, local_ip). The value is
+    # detected text; 'detail' names the detected part of the label (a mount
+    # point), which the collector has already cleaned of control characters.
     # Tabs and newlines become spaces; other control characters are dropped.
     local value="${2//[$'\t\n']/ }"
-    record line "$1" "${value//[[:cntrl:]]/}" "$3" "$4" both
+    record line "$1" "${value//[[:cntrl:]]/}" "$3" "$4" value "$5"
     prin=1
 }
 
@@ -1855,7 +1858,7 @@ render_json() {
 }
 
 render_text() {
-    local i label value
+    local i label value detail
 
     for ((i = 0; i < rec_n; i++)); do
         case ${rec_kind[i]} in
@@ -1877,10 +1880,15 @@ render_text() {
                 # Detected text must print as itself, not as '%b' escapes:
                 # its backslashes become '\0134', which '%b' prints as '\'.
                 # This happens before the bar adds neofetch's own escapes.
-                case ${rec_plain[i]} in
-                    value) value="${value//\\/\\0134}" ;;
-                    both)  value="${value//\\/\\0134}"; label="${label//\\/\\0134}" ;;
-                esac
+                # In the label only the detected part (detail) is escaped;
+                # the rest is config text that may use '\e' colors.
+                [[ ${rec_plain[i]} == value ]] && value="${value//\\/\\0134}"
+
+                detail="${rec_detail[i]}"
+                if [[ "$detail" && "$label" == *"$detail"* ]]; then
+                    local before="${label%"$detail"*}"
+                    label="${before}${detail//\\/\\0134}${label:${#before}+${#detail}}"
+                fi
 
                 [[ "${rec_bar[i]}" ]] && value="$(apply_bar "$value" "${rec_bar[i]}" "${rec_mode[i]}")"
                 render_line "$label" "$value"
@@ -2643,6 +2651,7 @@ layout_save() {
     fi
 
     rm -f "$tmp"
+    layout_tmp=
     return 0
 }
 
