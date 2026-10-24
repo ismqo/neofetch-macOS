@@ -1,0 +1,13 @@
+Uninstalled <sandbox>/prefix/bin/neofetch and its man page.
+Skipped relative/dir/neofetch: not an absolute path.
+Removed <sandbox>/tmp/neofetch-layout.abc123
+exit=0
+--- left in the sandbox:
+prefix/bin
+prefix/share
+prefix/share/man
+prefix/share/man/man1
+tmp/unrelated
+xdg/neofetch
+xdg/neofetch/config.conf
+xdg/neofetch/config.conf.bak

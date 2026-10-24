@@ -57,3 +57,9 @@ run_case shell-bash-path            "SHELL=$fakes/shells/bash" shell --shell_pat
 
 # An interrupted --customize save leaves no temporary file and the config intact.
 interrupt_case customize-interrupted    slow-validation.conf
+
+# make uninstall removes the program, the man page and the per-user leftovers
+# only; unexpected user names and relative config paths are skipped.
+make_case uninstall
+make_case uninstall-bad-user            'SUDO_USER=a;b'
+make_case uninstall-relative-xdg        XDG_CONFIG_HOME=relative/dir

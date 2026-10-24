@@ -196,6 +196,30 @@ interrupt_case() {
     })
 }
 
+make_case() {
+    # make_case NAME [NAME=value...]: install into a sandbox prefix, add the
+    # per-user leftovers, run 'make uninstall' and list what remains. Never
+    # run with a real SUDO_USER: the sudo path removes that user's own config.
+    local name=$1
+    shift
+    [[ -z "$filter" || "$name" == *"$filter"* ]] || return 0
+
+    reset_home
+    rm -rf "$sandbox/prefix"
+    mkdir -p "$sandbox/xdg/neofetch"
+    touch "$sandbox/xdg/neofetch/config.conf" "$sandbox/xdg/neofetch/config.conf.bak" \
+          "$sandbox/tmp/neofetch-layout.abc123" "$sandbox/tmp/unrelated"
+
+    check "$name" < <({
+        env -i HOME="$sandbox/home" XDG_CONFIG_HOME="$sandbox/xdg" \
+            TMPDIR="$sandbox/tmp" PATH="$sandbox/utils" "$@" \
+            make -s -C "$root" install uninstall PREFIX="$sandbox/prefix" 2>&1
+        printf 'exit=%s\n' "$?"
+        echo "--- left in the sandbox:"
+        (cd "$sandbox" && find prefix xdg tmp -mindepth 1 2>/dev/null | sort)
+    } | sed -e "s|$sandbox|<sandbox>|g" -e "s|$root|<repo>|g")
+}
+
 . "$tests/cases.sh"
 
 printf '\n%s passed, %s failed\n' "$pass" "$fail"
