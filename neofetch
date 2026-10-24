@@ -1495,12 +1495,49 @@ get_macos_disk_usage() {
     disk_used_perc=$(((used * 100 + total / 2) / total))
 }
 
+parse_df_line() {
+    # Split one 'df -P' line into df_fs, df_size, df_used, df_avail, df_perc
+    # and df_mount. The filesystem and the mount point may contain spaces, so
+    # the line is matched by its shape: three sizes and a 'N%' capacity, then
+    # the mount point (everything after it, spaces included). df_perc is
+    # always a plain number. Returns 1 when the line has no such shape.
+    local line=$1 rest i j n
+    local size='^[0-9][0-9.,]*[A-Za-z]*$' perc='^[0-9]+%$'
+    local -a f
+
+    IFS=$' \t' read -ra f <<< "$line"
+    n=${#f[@]}
+
+    for ((i = 1; i + 4 < n; i++)); do
+        [[ ${f[i]} =~ $size && ${f[i+1]} =~ $size && ${f[i+2]} =~ $size &&
+           ${f[i+3]} =~ $perc ]] || continue
+
+        df_fs="${f[*]:0:i}"
+        df_size=${f[i]}
+        df_used=${f[i+1]}
+        df_avail=${f[i+2]}
+        df_perc=${f[i+3]%\%}
+
+        # The mount point is the rest of the line after the capacity field.
+        rest=$line
+        for ((j = 0; j < i + 4; j++)); do
+            rest="${rest#"${rest%%[![:space:]]*}"}"
+            rest="${rest#"${f[j]}"}"
+        done
+        df_mount="${rest#"${rest%%[![:space:]]*}"}"
+        return 0
+    done
+
+    return 1
+}
+
 get_disk() {
     type -p df &>/dev/null ||
         { err "Disk requires 'df' to function. Install 'df' to get disk info."; return; }
 
     local disk disk_perc disk_sub i
-    local -a disks disk_info disk_targets
+    local df_fs df_size df_used df_avail df_perc df_mount
+    local -a disks disk_targets
     local data_vol=/System/Volumes/Data
 
     # On APFS, '/' is the sealed read-only system volume and only reports the
@@ -1525,19 +1562,21 @@ get_disk() {
     }
 
     for disk in "${disks[@]}"; do
-        # Create a second array and make each element split at whitespace this time.
-        IFS=" " read -ra disk_info <<< "$disk"
-        disk_perc=${disk_info[${#disk_info[@]} - 2]/\%}
+        parse_df_line "$disk" || {
+            err "Disk: Couldn't read the df line '${disk}'."
+            continue
+        }
+        disk_perc=$df_perc
 
-        disk=${disk_info[${#disk_info[@]} - 4]/i}
+        disk=${df_used/i}
         disk+=" / "
-        disk+=${disk_info[${#disk_info[@]} - 5]/i}
+        disk+=${df_size/i}
 
         # Present the Data volume as '/' and report usage like macOS does:
         # purgeable space (caches, local snapshots) counts as free, so
         # used = total - available for important usage.
-        if [[ ${disk_info[${#disk_info[@]} - 1]} == "$data_vol" ]]; then
-            disk_info[${#disk_info[@]} - 1]=/
+        if [[ "$df_mount" == "$data_vol" ]]; then
+            df_mount=/
             get_macos_disk_usage && {
                 disk="$disk_used_gb / $disk_total_gb"
                 disk_perc=$disk_used_perc
@@ -1547,18 +1586,18 @@ get_disk() {
 
         case $disk_subtitle in
             name)
-                disk_sub=${disk_info[*]::${#disk_info[@]} - 5}
+                disk_sub=$df_fs
             ;;
 
             dir)
-                disk_sub=${disk_info[${#disk_info[@]} - 1]/*\/}
-                disk_sub=${disk_sub:-${disk_info[${#disk_info[@]} - 1]}}
+                disk_sub=${df_mount/*\/}
+                disk_sub=${disk_sub:-$df_mount}
             ;;
 
             none) disk_sub= ;;
 
             *)
-                disk_sub=${disk_info[${#disk_info[@]} - 1]}
+                disk_sub=$df_mount
             ;;
         esac
 
@@ -1907,6 +1946,13 @@ render_cols() {
 apply_bar() {
     # value "elapsed total" mode
     local used="${2% *}" total="${2#* }"
+
+    # Bash runs commands found inside arithmetic, so only plain numbers may
+    # reach it; anything else is shown without a bar.
+    if ! [[ $used =~ ^[0-9]+$ && $total =~ ^[0-9]+$ ]] || ((total == 0)); then
+        printf '%s' "$1"
+        return
+    fi
 
     case $3 in
         "bar")     bar "$used" "$total" ;;

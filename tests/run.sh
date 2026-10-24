@@ -33,11 +33,12 @@ done
 
 pass=0
 fail=0
+updated=0
 failed=()
 
 reset_home() {
     # A fresh home, config directory and Homebrew prefix for each case.
-    rm -rf "$sandbox/home" "$sandbox/xdg" "$sandbox/tmp" "$sandbox/brew"
+    rm -rf "$sandbox/home" "$sandbox/xdg" "$sandbox/tmp" "$sandbox/brew" "$sandbox/INJECTED"
     mkdir -p "$sandbox/home" "$sandbox/xdg" "$sandbox/tmp" \
              "$sandbox/brew/Cellar/git" "$sandbox/brew/Cellar/jq" \
              "$sandbox/brew/Cellar/wget" "$sandbox/brew/Caskroom/firefox"
@@ -71,6 +72,7 @@ check() {
 
     if [[ "${UPDATE:-}" ]]; then
         printf '%s' "$actual" > "$golden/$name.out"
+        ((updated++))
         printf 'updated  %s\n' "$name"
         return
     fi
@@ -102,7 +104,8 @@ run_case() {
     [[ -z "$filter" || "$name" == *"$filter"* ]] || return 0
 
     reset_home
-    check "$name" < <({ neofetch "$@" 2>&1; printf "exit=%s\n" "$?"; } |
+    check "$name" < <({ neofetch "$@" 2>&1; printf "exit=%s\n" "$?"; 
+        [[ -e "$sandbox/INJECTED" ]] && echo "--- a command injected through the output ran"; } |
         sed "s|$sandbox|<sandbox>|g")
 }
 
@@ -155,8 +158,9 @@ customize_case() {
 printf '\n%s passed, %s failed\n' "$pass" "$fail"
 ((fail == 0)) || { printf 'failed: %s\n' "${failed[*]}"; exit 1; }
 
-# A run that checked nothing (for example a mistyped filter) is not a pass.
-if [[ -z "${UPDATE:-}" ]] && ((pass == 0)); then
+# A run that checked or updated nothing (for example a mistyped filter)
+# is not a pass.
+if ((pass + updated == 0)); then
     printf 'no case matched %s\n' "${filter:-(no filter)}"
     exit 1
 fi

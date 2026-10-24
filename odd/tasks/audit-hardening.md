@@ -18,8 +18,8 @@ Branch: fix/audit-hardening (base: main a1cf6c0). Delivery: ask-on-risk. Test ru
 
 ## Tasks
 
-- T1 [S1] inline — test harness + golden outputs. Status: pending.
-- T2 [S2] inline — disk parsing. Status: pending.
+- T1 [S1] inline — test harness + golden outputs. Status: done (244c64d, 44f087e; RDD approved x2).
+- T2 [S2] inline — disk parsing. Status: done (RED: garbled line + injected file; GREEN: 24/24).
 - T3 [S3] inline — escape sanitization. Status: pending.
 - T4 [S4] inline — subshell reduction. Status: pending.
 - T5 [S5] inline — small items. Status: pending.

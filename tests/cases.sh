@@ -27,3 +27,12 @@ config_case override-gpu            override-gpu.conf --stdout
 customize_case customize-edit       'jj\nSystem\nJj \e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B\e[B s'
 customize_case customize-quit       ' qq'
 customize_case customize-refuse     's' custom-code.conf
+
+# Disk names with spaces, and a name that tries to run a command from bash
+# arithmetic (the fake df prints mount points as given).
+run_case disk-spaces                --stdout --disk_show '/Volumes/My Passport' / --disk_display barinfo
+run_case disk-injection             --stdout --disk_show '/Volumes/a x[$(printf${IFS}x>$FAKE_ROOT/INJECTED)] b' \
+                                    --disk_display barinfo
+run_case disk-subtitle-name         disk --disk_show '/Volumes/My Passport' --disk_subtitle name
+run_case disk-subtitle-dir          disk --disk_show '/Volumes/My Passport' --disk_subtitle dir
+run_case memory-gib-bar             memory --memory_unit gib --memory_display infobar
