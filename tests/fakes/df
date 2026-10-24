@@ -3,6 +3,8 @@
 # with spaces (FAKE_DISK tests) reach neofetch exactly like the real df.
 shift 2
 echo 'Filesystem     Size   Used  Avail Capacity  Mounted on'
+# FAKE_DF=garbled: a line without the usual columns.
+[[ "$FAKE_DF" == garbled ]] && { echo 'garbled output'; exit; }
 for mount; do
     case $mount in
         /System/Volumes/Data) echo "/dev/disk3s5   494G   280G   180G    61%    $mount" ;;

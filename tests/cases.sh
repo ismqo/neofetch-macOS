@@ -36,3 +36,14 @@ run_case disk-injection             --stdout --disk_show '/Volumes/a x[$(printf$
 run_case disk-subtitle-name         disk --disk_show '/Volumes/My Passport' --disk_subtitle name
 run_case disk-subtitle-dir          disk --disk_show '/Volumes/My Passport' --disk_subtitle dir
 run_case memory-gib-bar             memory --memory_unit gib --memory_display infobar
+run_case disk-garbled-df            FAKE_DF=garbled -v --stdout
+config_case bar-non-numeric         bad-bar-data.conf --stdout --memory_display infobar
+
+# Detected text with control characters or '%b' escapes prints as plain text;
+# neofetch's own colors still render (see default-logo).
+run_case escape-raw-bytes           $'FAKE_GPU=Apple\e[31m M4\e]0;pwned\a' --stdout gpu
+run_case escape-backslash-text      'FAKE_GPU=Apple \e[31mM4\033[0m \n end' --stdout gpu
+run_case escape-backslash-json      'FAKE_GPU=Apple \e[31mM4' --json
+run_case escape-colored             'FAKE_GPU=Apple \e[31mM4'
+run_case escape-disk-name           --stdout disk --disk_show $'/Volumes/E\e[2Jvil\\e[31m'
+run_case escape-title               $'USER=te\e[2Jster' 'HOSTNAME=host\e[31m' --stdout title

@@ -1600,6 +1600,7 @@ get_disk() {
                 disk_sub=$df_mount
             ;;
         esac
+        disk_sub="${disk_sub//[[:cntrl:]]/}"
 
         # Append '(disk mount point)' to the subtitle.
         if [[ "$subtitle" ]]; then
@@ -1679,7 +1680,9 @@ get_process_name() {
 rec_n=0
 
 record() {
-    # kind label value bar_data display_mode
+    # kind label value bar_data display_mode plain
+    # 'plain' names the parts holding detected text ('value' or 'both'),
+    # which render as literal text rather than '%b' escapes.
     # With 'rec_at' set, fill that reserved slot instead of appending.
     local i=${rec_at:-$rec_n}
     rec_kind[i]="$1"
@@ -1687,12 +1690,14 @@ record() {
     rec_value[i]="$3"
     rec_bar[i]="$4"
     rec_mode[i]="$5"
+    rec_plain[i]="$6"
     [[ "$rec_at" ]] || ((rec_n++))
 }
 
 add_result() {
-    # Used by collectors that produce several lines (disk, local_ip).
-    record line "$1" "$2" "$3" "$4"
+    # Used by collectors that produce several lines (disk, local_ip). Their
+    # labels include detected text such as mount points.
+    record line "$1" "${2//[[:cntrl:]]/}" "$3" "$4" both
     prin=1
 }
 
@@ -1746,7 +1751,7 @@ info() {
     esac
 
     case $name in
-        title)     record title "$user" "$hostname" ;;
+        title)     record title "${user//[[:cntrl:]]/}" "${hostname//[[:cntrl:]]/}" ;;
         underline) record underline ;;
         cols)      record cols ;;
     esac
@@ -1758,15 +1763,17 @@ info() {
     # If the get_func function recorded its own lines, stop here.
     [[ "$prin" ]] && { unset -v subtitle; return; }
 
-    # Update the variable.
+    # Update the variable. Detected text never carries control characters,
+    # so it can't move the cursor, clear the screen or set the window title.
     output="$(trim "${!name}")"
+    output="${output//[[:cntrl:]]/}"
     mode_var="${name}_display"
 
     if [[ "$2" && "${output// }" ]]; then
-        rec_at=$info_slot record line "$1" "$output" "$bar_data" "${!mode_var}"
+        rec_at=$info_slot record line "$1" "$output" "$bar_data" "${!mode_var}" value
 
     elif [[ "${output// }" ]]; then
-        rec_at=$info_slot record line "" "$output" "$bar_data" "${!mode_var}"
+        rec_at=$info_slot record line "" "$output" "$bar_data" "${!mode_var}" value
 
     else
         err "Info: Couldn't detect ${1}."
@@ -1847,8 +1854,9 @@ render_text() {
     for ((i = 0; i < rec_n; i++)); do
         case ${rec_kind[i]} in
             title)
+                local user_out="${rec_label[i]//\\/\\0134}" host_out="${rec_value[i]//\\/\\0134}"
                 render_line "" \
-                    "${title_color}${bold}${rec_label[i]}${at_color}@${title_color}${bold}${rec_value[i]}"
+                    "${title_color}${bold}${user_out}${at_color}@${title_color}${bold}${host_out}"
             ;;
 
             underline) render_underline ;;
@@ -1858,25 +1866,35 @@ render_text() {
             line)
                 value="${rec_value[i]}"
                 [[ "${rec_bar[i]}" ]] && value="$(apply_bar "$value" "${rec_bar[i]}" "${rec_mode[i]}")"
-                render_line "${rec_label[i]}" "$value"
+                render_line "${rec_label[i]}" "$value" "${rec_plain[i]}"
             ;;
         esac
     done
 }
 
 render_line() {
-    local string subtitle_color="$subtitle_color"
+    # label value [plain]: 'plain' ('value' or 'both') marks detected text,
+    # whose backslashes print as themselves instead of '%b' escapes. The
+    # width is measured on the text as shown.
+    local string shown subtitle_color="$subtitle_color" label=$1 value=$2
+
+    case $3 in
+        value) value="${value//\\/\\0134}" ;;
+        both)  value="${value//\\/\\0134}"; label="${label//\\/\\0134}" ;;
+    esac
 
     # If $2 doesn't exist we format $1 as info.
     if [[ "$(trim "$1")" && "$2" ]]; then
-        string="${1}${2:+: $2}"
+        string="${label}${value:+: $value}"
+        shown="${1}${2:+: $2}"
     else
-        string="${2:-$1}"
+        string="${value:-$label}"
+        shown="${2:-$1}"
         subtitle_color="$info_color"
     fi
 
     string="$(trim "${string//$'\e[0m'}")"
-    length="$(strip_sequences "$string")"
+    length="$(strip_sequences "$(trim "${shown//$'\e[0m'}")")"
     str_width "$length"
     length="$str_width_out"
 

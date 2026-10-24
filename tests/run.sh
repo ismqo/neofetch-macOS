@@ -117,7 +117,8 @@ config_case() {
 
     reset_home
     cp "$tests/configs/$config" "$sandbox/home/config.conf"
-    check "$name" < <({ neofetch --config "$sandbox/home/config.conf" "$@" 2>&1; printf "exit=%s\n" "$?"; } |
+    check "$name" < <({ neofetch --config "$sandbox/home/config.conf" "$@" 2>&1; printf "exit=%s\n" "$?"; 
+        [[ -e "$sandbox/INJECTED" ]] && echo "--- a command injected through the output ran"; } |
         sed "s|$sandbox|<sandbox>|g")
 }
 
