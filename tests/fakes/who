@@ -1,2 +1,0 @@
-#!/bin/bash
-printf 'tester   console  Nov 14 22:14\ntester   ttys000  Nov 15 09:00\n'

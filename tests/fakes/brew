@@ -1,8 +1,0 @@
-#!/bin/bash
-# Fake Homebrew: the Cellar and Caskroom live in the test sandbox.
-case $1 in
-    --cellar)   echo "$FAKE_ROOT/brew/Cellar" ;;
-    --caskroom) echo "$FAKE_ROOT/brew/Caskroom" ;;
-    --prefix)   echo "$FAKE_ROOT/brew" ;;
-    *) exit 1 ;;
-esac

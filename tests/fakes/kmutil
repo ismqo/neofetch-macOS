@@ -1,3 +1,0 @@
-#!/bin/bash
-# Fake loaded kexts (Intel model detection); none of interest.
-exit 0

@@ -1,2 +1,0 @@
-#!/bin/bash
-[[ "$1" == +show-config ]] && printf 'font-family = "Test Mono"\nfont-size = 13\n'

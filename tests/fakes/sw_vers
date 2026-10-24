@@ -1,2 +1,0 @@
-#!/bin/bash
-printf 'ProductName:\t\tmacOS\nProductVersion:\t\t15.1\nBuildVersion:\t\t24B83\n'

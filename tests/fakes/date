@@ -1,4 +1,0 @@
-#!/bin/bash
-# Fake clock: 1 day, 2 hours, 3 minutes after the fake boot time.
-[[ "$1" == +%s ]] && { echo 1700093780; exit; }
-exec /bin/date "$@"

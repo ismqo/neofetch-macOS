@@ -2,15 +2,8 @@
 
 # Neofetch for macOS
 
-macOS fork of [Neofetch](https://github.com/dylanaraps/neofetch) by Dylan Araps,
-maintained by **ismqo**. Shows OS, CPU, memory, disk, shell and local IP information.
+macOS fork of [Neofetch](https://github.com/dylanaraps/neofetch) by Dylan Araps, maintained by **ismqo**. Shows OS, CPU, memory, disk, shell and local IP information.
 Requires macOS and Bash 3.2+.
-
-## How this fork differs
-
-- macOS-only, with no extra packages or network requests.
-- Image/wallpaper display, public-IP and music lookups removed.
-- Hardened disk parsing and terminal output, optimized rendering, and regression tests.
 
 ## Install / uninstall
 
@@ -57,6 +50,6 @@ image_backend="ascii"
 image_source="$HOME/Pictures/my-art.txt"
 ```
 
-## Tests and license
+## License
 
-Run `make test` for the regression suite. Licensed under [MIT](LICENSE.md).
+Licensed under [MIT](LICENSE.md).

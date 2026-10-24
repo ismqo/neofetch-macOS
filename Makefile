@@ -4,9 +4,6 @@ MANDIR = $(PREFIX)/share/man
 all:
 	@echo Run \'make install\' to install Neofetch.
 
-test:
-	@bash tests/run.sh
-
 install:
 	@mkdir -p $(DESTDIR)$(PREFIX)/bin
 	@mkdir -p $(DESTDIR)$(MANDIR)/man1
