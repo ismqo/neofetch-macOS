@@ -5,6 +5,8 @@
 macOS fork of [Neofetch](https://github.com/dylanaraps/neofetch) by Dylan Araps, maintained by **ismqo**. Shows OS, CPU, memory, disk, shell and local IP information.
 Requires macOS and Bash 3.2+.
 
+![Neofetch for macOS running in Ghostty](screenshot.png)
+
 ## Install / uninstall
 
 With [Homebrew](https://brew.sh):
