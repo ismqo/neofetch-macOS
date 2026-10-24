@@ -1,4 +1,3 @@
-<p align="center"><img src="logo.svg" alt="macOS ASCII logo" width="300"></p>
 
 # Neofetch for macOS
 
