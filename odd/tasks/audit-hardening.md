@@ -22,7 +22,7 @@ Branch: fix/audit-hardening (base: main a1cf6c0). Delivery: ask-on-risk. Test ru
 - T2 [S2] inline — disk parsing. Status: done (RED: garbled line + injected file; GREEN: 24/24).
 - T3 [S3] inline — escape sanitization. Status: done (RED: ESC bytes in 5 cases; GREEN: 32/32; colored output unchanged).
 - T4 [S4] inline — subshell reduction. Status: done (35/35 identical; --stdout 250->221ms, logo 253->215ms, cheap fields 74->47ms).
-- T5 [S5] inline — small items. Status: pending.
+- T5 [S5] inline — small items. Status: done (d67afdd, a37d5cf; RED shown on old code for shell + interrupt; 41/41).
 - T6 [S1-S5] delegated verify at feature end (Risk items 2/3/5). Status: pending.
 
 Route: all inline — one file (`neofetch`) shared by every unit, so no parallel writers.
@@ -32,3 +32,7 @@ Route: all inline — one file (`neofetch`) shared by every unit, so no parallel
 - L1 (2026-10-24): "can you find for security, privacy and performance concerns?" → audit; user: "yes"
   to "Should I implement these? I'd add the tests from the previous suggestion first, so each fix can
   be checked."
+- L2: Commits: 244c64d, 44f087e (tests; RDD approved), 99e2b4a (disk; RDD approved), ed493bd (escapes;
+  RDD approved), 6756e58 (escape-before-bar fix; RDD declined), 09376fe (perf; under budget),
+  d67afdd (shell + interrupt; slice RDD declined), a37d5cf (Makefile; RDD declined).
+  Suite: 41/41. Timing: --stdout 250->221ms, logo 253->215ms.
