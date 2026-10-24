@@ -7,7 +7,17 @@ Requires macOS and Bash 3.2+.
 
 ## Install / uninstall
 
-Run from this repository:
+With [Homebrew](https://brew.sh):
+
+```sh
+brew install ismqo/tap/neofetch-macos
+brew uninstall ismqo/tap/neofetch-macos
+```
+
+Homebrew uninstall removes only its managed installation. It does not delete
+your configuration or a manual installation under `/usr/local`.
+
+Or manually, from this repository:
 
 ```sh
 sudo make install       # installs the command and man page under /usr/local
