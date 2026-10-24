@@ -1,0 +1,3246 @@
+#!/usr/bin/env bash
+# vim: noai:ts=4:sw=4:expandtab
+# shellcheck source=/dev/null
+# shellcheck disable=2009
+#
+# Neofetch: A command-line system information tool for macOS, written in bash 3.2+.
+# https://github.com/dylanaraps/neofetch
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2015-2021 Dylan Araps
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+version=7.1.0
+
+# Fallback to a value of '5' for shells which support bash
+# but do not set the 'BASH_' shell variables.
+bash_version=${BASH_VERSINFO[0]:-5}
+shopt -s eval_unsafe_arith &>/dev/null
+
+sys_locale=${LANG:-C}
+case $sys_locale in
+    *[Uu][Tt][Ff]-8* | *[Uu][Tt][Ff]8*) utf8_locale=$sys_locale ;;
+    *) utf8_locale=en_US.UTF-8 ;;
+esac
+
+XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-${HOME}/.config}
+PATH=$PATH:/usr/sbin:/sbin:/usr/libexec
+reset='\e[0m'
+shopt -s nocasematch
+
+# Speed up script by not using unicode.
+LC_ALL=C
+LANG=C
+
+# Neofetch default config.
+read -rd '' config <<'EOF'
+# Lines to display, in order. 'info "Label" name' shows the value of
+# get_<name>; 'underline' and 'cols' are layout rows.
+print_info() {
+    info title
+    info underline
+
+    info "OS" distro
+    info "Host" model
+    info "Kernel" kernel
+    info "Uptime" uptime
+    info "Packages" packages
+    info "Shell" shell
+    info "Resolution" resolution
+    info "DE" de
+    info "WM" wm
+    info "WM Theme" wm_theme
+    info "Terminal" term
+    info "Terminal Font" term_font
+    info "CPU" cpu
+    info "GPU" gpu
+    info "Memory" memory
+
+    # info "GPU Driver" gpu_driver
+    info "Disk" disk
+    # info "Battery" battery
+    info "Local IP" local_ip
+    # info "Users" users
+    # info "Locale" locale
+
+    info cols
+}
+
+# Title
+
+
+# Hide/Show Fully qualified domain name.
+#
+# Default:  'off'
+# Values:   'on', 'off'
+# Flag:     --title_fqdn
+title_fqdn="off"
+
+
+# Kernel
+
+
+# Shorten the output of the kernel function.
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --kernel_shorthand
+#
+# Example:
+# on:  '24.1.0'
+# off: 'Darwin 24.1.0'
+kernel_shorthand="on"
+
+
+# Distro
+
+
+# Shorten the output of the distro function
+#
+# Default:  'off'
+# Values:   'on', 'tiny', 'off'
+# Flag:     --distro_shorthand
+#
+# Example:
+# on:   'macOS Sequoia 15.1 arm64'
+# tiny: 'macOS 15.1 arm64'
+# off:  'macOS Sequoia 15.1 24B83 arm64'
+distro_shorthand="off"
+
+# Show/Hide OS Architecture.
+# Show 'arm64' or 'x86_64' in 'OS:' output.
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --os_arch
+#
+# Example:
+# on:  'macOS Sequoia 15.1 24B83 arm64'
+# off: 'macOS Sequoia 15.1 24B83'
+os_arch="on"
+
+
+# Uptime
+
+
+# Shorten the output of the uptime function
+#
+# Default: 'on'
+# Values:  'on', 'tiny', 'off'
+# Flag:    --uptime_shorthand
+#
+# Example:
+# on:   '2 days, 10 hours, 3 mins'
+# tiny: '2d 10h 3m'
+# off:  '2 days, 10 hours, 3 minutes'
+uptime_shorthand="on"
+
+
+# Memory
+
+
+# Show memory percentage in output.
+#
+# Default: 'off'
+# Values:  'on', 'off'
+# Flag:    --memory_percent
+#
+# Example:
+# on:   '1801MiB / 7881MiB (22%)'
+# off:  '1801MiB / 7881MiB'
+memory_percent="off"
+
+# Change memory output unit.
+#
+# Default: 'mib'
+# Values:  'kib', 'mib', 'gib'
+# Flag:    --memory_unit
+#
+# Example:
+# kib  '1020928KiB / 7117824KiB'
+# mib  '1042MiB / 6951MiB'
+# gib: ' 0.98GiB / 6.79GiB'
+memory_unit="mib"
+
+
+# Packages
+
+
+# Show/Hide Package Manager names.
+#
+# Default: 'on'
+# Values:  'on', 'tiny' 'off'
+# Flag:    --package_managers
+#
+# Example:
+# on:   '98 (brew), 4 (port)'
+# tiny: '102 (brew, port)'
+# off:  '102'
+package_managers="on"
+
+
+# Shell
+
+
+# Show the path to $SHELL
+#
+# Default: 'off'
+# Values:  'on', 'off'
+# Flag:    --shell_path
+#
+# Example:
+# on:  '/bin/zsh'
+# off: 'zsh'
+shell_path="off"
+
+# Show $SHELL version
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --shell_version
+#
+# Example:
+# on:  'zsh 5.9'
+# off: 'zsh'
+shell_version="on"
+
+
+# CPU
+
+
+# Enable/Disable CPU brand in output.
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --cpu_brand
+#
+# Example:
+# on:   'Intel i7-8700B (12) @ 3.20GHz'
+# off:  'i7-8700B (12) @ 3.20GHz'
+cpu_brand="on"
+
+# CPU Speed
+# Hide/Show CPU speed (Intel Macs report it as part of the CPU name).
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --cpu_speed
+#
+# Example:
+# on:  'Intel i7-8700B (12) @ 3.20GHz'
+# off: 'Intel i7-8700B (12)'
+cpu_speed="on"
+
+# CPU Cores
+# Display CPU cores in output
+#
+# Default: 'logical'
+# Values:  'logical', 'physical', 'off'
+# Flag:    --cpu_cores
+#
+# Example:
+# logical:  'Apple M4 (10)' (All virtual cores)
+# physical: 'Intel i7-8700B (6) @ 3.20GHz' (All physical cores)
+# off:      'Apple M4'
+cpu_cores="logical"
+
+
+# GPU
+
+
+# Enable/Disable GPU Brand
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --gpu_brand
+#
+# Example:
+# on:  'AMD Radeon Pro 5500M'
+# off: 'Radeon Pro 5500M'
+gpu_brand="on"
+
+
+# Resolution
+
+
+# Display refresh rate next to each monitor
+# Default: 'off'
+# Values:  'on', 'off'
+# Flag:    --refresh_rate
+#
+# Example:
+# on:  '5120x2880@2x @ 60Hz'
+# off: '5120x2880@2x'
+refresh_rate="off"
+
+
+# IP Address
+
+
+# Local IP interface
+#
+# Default: 'auto' (interface of default route)
+# Values:  'auto', 'en0', 'en1'
+# Flag:    --ip_interface
+local_ip_interface=('auto')
+
+
+# Disk
+
+
+# Which disks to display.
+# The values can be any /dev/diskXsY, mount point or directory.
+# NOTE: By default we only show the disk info for '/'. On APFS (macOS 10.15+)
+#       '/' is the read-only system volume; use '/System/Volumes/Data' to see
+#       how much space your own data uses.
+#
+# Default: '/'
+# Values:  '/', '/dev/diskXsY', '/path/to/drive'.
+# Flag:    --disk_show
+#
+# Example:
+# disk_show=('/' '/Volumes/Backup'):
+#      'Disk (/): 74G / 118G (66%)'
+#      'Disk (/Volumes/Backup): 823G / 893G (93%)'
+#
+# disk_show=('/'):
+#      'Disk (/): 74G / 118G (66%)'
+#
+disk_show=('/')
+
+# Disk subtitle.
+# What to append to the Disk subtitle.
+#
+# Default: 'mount'
+# Values:  'mount', 'name', 'dir', 'none'
+# Flag:    --disk_subtitle
+#
+# Example:
+# name:   'Disk (/dev/disk3s1s1): 74G / 118G (66%)'
+#
+# mount:  'Disk (/): 74G / 118G (66%)'
+#         'Disk (/Volumes/Backup): 74G / 118G (66%)'
+#
+# dir:    'Disk (/): 74G / 118G (66%)'
+#         'Disk (Backup): 74G / 118G (66%)'
+#
+# none:   'Disk: 74G / 118G (66%)'
+disk_subtitle="mount"
+
+# Disk percent.
+# Show/Hide disk percent.
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --disk_percent
+#
+# Example:
+# on:  'Disk (/): 74G / 118G (66%)'
+# off: 'Disk (/): 74G / 118G'
+disk_percent="on"
+
+
+# Text Colors
+
+
+# Text Colors
+#
+# Default:  'distro'
+# Values:   'distro', 'num' 'num' 'num' 'num' 'num' 'num'
+# Flag:     --colors
+#
+# Each number represents a different part of the text in
+# this order: 'title', '@', 'underline', 'subtitle', 'colon', 'info'
+#
+# Example:
+# colors=(distro)      - Text is colored based on the macOS logo colors.
+# colors=(4 6 1 8 8 6) - Text is colored in the order above.
+colors=(distro)
+
+
+# Text Options
+
+
+# Toggle bold text
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --bold
+bold="on"
+
+# Enable/Disable Underline
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --underline
+underline_enabled="on"
+
+# Underline character
+#
+# Default:  '-'
+# Values:   'string'
+# Flag:     --underline_char
+underline_char="-"
+
+
+# Info Separator
+# Replace the default separator with the specified string.
+#
+# Default:  ':'
+# Flag:     --separator
+#
+# Example:
+# separator="->":   'Shell-> bash'
+# separator=" =":   'WM = yabai'
+separator=":"
+
+
+# Color Blocks
+
+
+# Color block range
+# The range of colors to print.
+#
+# Default:  '0', '15'
+# Values:   'num'
+# Flag:     --block_range
+#
+# Example:
+#
+# Display colors 0-7 in the blocks.  (8 colors)
+# neofetch --block_range 0 7
+#
+# Display colors 0-15 in the blocks. (16 colors)
+# neofetch --block_range 0 15
+block_range=(0 15)
+
+# Toggle color blocks
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --color_blocks
+color_blocks="on"
+
+# Color block width in spaces
+#
+# Default:  '3'
+# Values:   'num'
+# Flag:     --block_width
+block_width=3
+
+# Color block height in lines
+#
+# Default:  '1'
+# Values:   'num'
+# Flag:     --block_height
+block_height=1
+
+# Color Alignment
+#
+# Default: 'auto'
+# Values: 'auto', 'num'
+# Flag: --col_offset
+#
+# Number specifies how far from the left side of the terminal (in spaces) to
+# begin printing the columns, in case you want to e.g. center them under your
+# text.
+# Example:
+# col_offset="auto" - Default behavior of neofetch
+# col_offset=7      - Leave 7 spaces then print the colors
+col_offset="auto"
+
+# Progress Bars
+
+
+# Bar characters
+#
+# Default:  '-', '='
+# Values:   'string', 'string'
+# Flag:     --bar_char
+#
+# Example:
+# neofetch --bar_char 'elapsed' 'total'
+# neofetch --bar_char '-' '='
+bar_char_elapsed="-"
+bar_char_total="="
+
+# Toggle Bar border
+#
+# Default:  'on'
+# Values:   'on', 'off'
+# Flag:     --bar_border
+bar_border="on"
+
+# Progress bar length in spaces
+# Number of chars long to make the progress bars.
+#
+# Default:  '15'
+# Values:   'num'
+# Flag:     --bar_length
+bar_length=15
+
+# Progress bar colors
+# When set to distro, uses the macOS logo colors.
+#
+# Default:  'distro', 'distro'
+# Values:   'distro', 'num'
+# Flag:     --bar_colors
+#
+# Example:
+# neofetch --bar_colors 3 4
+# neofetch --bar_colors distro 5
+bar_color_elapsed="distro"
+bar_color_total="distro"
+
+
+# Info display
+# Display a bar with the info.
+#
+# Default: 'off'
+# Values:  'bar', 'infobar', 'barinfo', 'off'
+# Flags:   --memory_display
+#          --battery_display
+#          --disk_display
+#
+# Example:
+# bar:     '[---=======]'
+# infobar: 'info [---=======]'
+# barinfo: '[---=======] info'
+# off:     'info'
+memory_display="off"
+battery_display="off"
+disk_display="off"
+
+
+# Logo Settings
+
+
+# Logo display.
+#
+# Default:  'ascii'
+# Values:   'ascii', 'off'
+# Flag:     --backend
+image_backend="ascii"
+
+# Logo Source
+#
+# Which ascii art to display.
+#
+# Default:  'auto'
+# Values:   'auto', '/path/to/ascii', 'command output'
+#           (neofetch --ascii "$(fortune | cowsay -W 30)")
+# Flag:     --source
+#
+# NOTE: 'auto' shows the bundled macOS logo.
+image_source="auto"
+
+
+# Ascii Options
+
+
+# Ascii art
+# Which bundled ascii art to display.
+#
+# Default: 'auto'
+# Values:  'auto', 'macos', 'mac_small'
+# Flag:    --ascii_distro
+ascii_distro="auto"
+
+# Ascii Colors
+#
+# Default:  'distro'
+# Values:   'distro', 'num' 'num' 'num' 'num' 'num' 'num'
+# Flag:     --ascii_colors
+#
+# Example:
+# ascii_colors=(distro)      - Ascii is colored using the macOS logo colors.
+# ascii_colors=(4 6 1 8 8 6) - Ascii is colored using these colors.
+ascii_colors=(distro)
+
+# Bold ascii logo
+# Whether or not to bold the ascii logo.
+#
+# Default: 'on'
+# Values:  'on', 'off'
+# Flag:    --ascii_bold
+ascii_bold="on"
+
+
+# Gap between logo and text
+#
+# Default: '3'
+# Values:  'num', '-num'
+# Flag:    --gap
+gap=3
+
+
+# Misc Options
+
+# Stdout mode
+# Turn off all colors and disables the ascii logo.
+# Useful for piping into another command.
+# Default: 'off'
+# Values: 'on', 'off'
+stdout="off"
+EOF
+
+# SYSTEM PROBES
+#
+# Probes wrap macOS interfaces whose results are shared by several fields.
+# Results are kept in variables for the lifetime of one invocation only.
+
+cache_uname() {
+    IFS=" " read -ra uname <<< "$(uname -srm)"
+
+    kernel_name="${uname[0]}"
+    kernel_version="${uname[1]}"
+    kernel_machine="${uname[2]}"
+}
+
+require_macos() {
+    [[ "$kernel_name" == "Darwin" ]] && return
+
+    printf '%s\n' \
+        "neofetch: unsupported operating system '${kernel_name:-unknown}'." \
+        "neofetch: this version supports macOS only." >&2
+    exit 1
+}
+
+get_macos_version() {
+    # macOS can report incorrect versions unless this is 0.
+    # https://github.com/dylanaraps/neofetch/issues/1607
+    export SYSTEM_VERSION_COMPAT=0
+
+    local key value line plist=/System/Library/CoreServices/SystemVersion.plist
+    local -a sw_vers
+
+    while IFS=: read -r key value; do
+        value="${value#"${value%%[![:space:]]*}"}"
+        case $key in
+            ProductName)    darwin_name="$value" ;;
+            ProductVersion) osx_version="$value" ;;
+            BuildVersion)   osx_build="$value" ;;
+        esac
+    done < <(sw_vers 2>/dev/null)
+
+    # Fall back to reading the version file directly if 'sw_vers' fails.
+    if [[ -z "$osx_version" && -r "$plist" ]]; then
+        IFS=$'\n' read -d "" -ra sw_vers <<< "$(awk -F'<|>' '/key|string/ {print $3}' "$plist")"
+        for ((i=0;i<${#sw_vers[@]};i+=2)) {
+            line="${sw_vers[i+1]}"
+            case ${sw_vers[i]} in
+                ProductName)          darwin_name="$line" ;;
+                ProductVersion)       osx_version="$line" ;;
+                ProductBuildVersion)  osx_build="$line"   ;;
+            esac
+        }
+    fi
+
+    os="${darwin_name:-macOS}"
+}
+
+is_apple_silicon() {
+    # 'uname -m' reports x86_64 when this shell runs under Rosetta 2;
+    # 'sysctl.proc_translated' is 1 for translated processes and missing on Intel.
+    [[ "$kernel_machine" == "arm64" ]] && return 0
+    [[ -z "$proc_translated" ]] && proc_translated="$(sysctl -n sysctl.proc_translated 2>/dev/null)"
+    [[ "$proc_translated" == 1 ]]
+}
+
+prefetch_displays() {
+    # 'system_profiler' is the slowest probe (~200ms). When the fields to show
+    # ($1: their names, e.g. the body of print_info) need it, start it in the
+    # background now so it runs while the other fields are detected. Apple
+    # Silicon GPUs are read from IOKit instead, so only Resolution needs it.
+    local needed nocase
+
+    # Match field names only, not labels such as "GPU Driver".
+    shopt -q nocasematch && nocase=1
+    shopt -u nocasematch
+
+    if is_field gpu && ! is_apple_silicon && [[ " $1 " =~ [^a-z_]gpu[^a-z_] ]]; then
+        needed=1
+    elif is_field resolution && [[ " $1 " =~ [^a-z_]resolution[^a-z_] ]] &&
+         ! type -p screenresolution >/dev/null; then
+        needed=1
+    fi
+
+    [[ "$nocase" ]] && shopt -s nocasematch
+    [[ "$needed" ]] || return
+
+    # Drop the inherited stderr so an unread probe never holds the caller's pipe.
+    exec 9< <(exec 2>/dev/null; exec system_profiler SPDisplaysDataType)
+    displays_prefetched=1
+}
+
+probe_displays() {
+    # One 'system_profiler' call is shared by the GPU and Resolution fields.
+    ((displays_probed)) && return
+    displays_probed=1
+
+    if ((displays_prefetched)); then
+        displays_prefetched=0
+        displays_report="$(cat <&9)"
+        exec 9<&-
+    fi
+
+    # Also covers a prefetch already drained by a subshell, e.g. a config
+    # running '$(get_gpu)'.
+    [[ "$displays_report" ]] ||
+        displays_report="$(system_profiler SPDisplaysDataType 2>/dev/null)"
+}
+
+probe_kexts() {
+    # Loaded kernel extensions (Hackintosh and NVIDIA web driver checks).
+    # Apple silicon Macs can be neither, so the slow probe is skipped there.
+    ((kexts_probed)) && return
+    kexts_probed=1
+    is_apple_silicon && return
+
+    if type -p kmutil &>/dev/null; then
+        loaded_kexts="$(kmutil showloaded --list-only 2>/dev/null)"
+    else
+        loaded_kexts="$(kextstat -l 2>/dev/null)"
+    fi
+}
+
+# DETECT INFORMATION
+#
+# Collectors set a variable named after the field (and optionally 'bar_data')
+# or call 'add_result' for multi-line fields. They never print.
+
+get_title() {
+    user=${USER:-$(id -un || printf %s "${HOME/*\/}")}
+
+    case $title_fqdn in
+        on) hostname=$(hostname -f) ;;
+        *)  hostname=${HOSTNAME:-$(hostname)} ;;
+    esac
+
+    title="${user}@${hostname}"
+}
+
+get_distro() {
+    [[ $distro ]] && return
+
+    local codename family
+
+    case $osx_version in
+        10.0 | 10.0.*)  codename="Mac OS X Cheetah" ;;
+        10.1 | 10.1.*)  codename="Mac OS X Puma" ;;
+        10.2 | 10.2.*)  codename="Mac OS X Jaguar" ;;
+        10.3 | 10.3.*)  codename="Mac OS X Panther" ;;
+        10.4*)  codename="Mac OS X Tiger" ;;
+        10.5*)  codename="Mac OS X Leopard" ;;
+        10.6*)  codename="Mac OS X Snow Leopard" ;;
+        10.7*)  codename="Mac OS X Lion" ;;
+        10.8*)  codename="OS X Mountain Lion" ;;
+        10.9*)  codename="OS X Mavericks" ;;
+        10.10*) codename="OS X Yosemite" ;;
+        10.11*) codename="OS X El Capitan" ;;
+        10.12*) codename="macOS Sierra" ;;
+        10.13*) codename="macOS High Sierra" ;;
+        10.14*) codename="macOS Mojave" ;;
+        10.15*) codename="macOS Catalina" ;;
+        10.16*) codename="macOS Big Sur" ;;
+        11 | 11.*) codename="macOS Big Sur" ;;
+        12 | 12.*) codename="macOS Monterey" ;;
+        13 | 13.*) codename="macOS Ventura" ;;
+        14 | 14.*) codename="macOS Sonoma" ;;
+        15 | 15.*) codename="macOS Sequoia" ;;
+        26 | 26.*) codename="macOS Tahoe" ;;
+        27 | 27.*) codename="macOS Golden Gate" ;;
+        *)         codename="macOS" ;;
+    esac
+
+    case $codename in
+        "Mac OS X"*) family="Mac OS X" ;;
+        "OS X"*)     family="OS X" ;;
+        *)           family="macOS" ;;
+    esac
+
+    distro="$codename $osx_version $osx_build"
+
+    case $distro_shorthand in
+        on)   distro="$codename $osx_version" ;;
+        tiny) distro="$family $osx_version" ;;
+    esac
+
+    distro="$(trim "$distro")"
+    [[ $osx_version ]] || distro="$os"
+
+    # Get OS architecture.
+    machine_arch="$kernel_machine"
+    [[ "$machine_arch" == "x86_64" ]] && is_apple_silicon && machine_arch="arm64"
+
+    [[ $os_arch == on ]] && \
+        distro+=" $machine_arch"
+
+    [[ ${ascii_distro:-auto} == auto ]] && \
+        ascii_distro="$(trim "$distro")"
+}
+
+get_model() {
+    local hw_model
+    hw_model="$(sysctl -n hw.model 2>/dev/null)"
+    [[ "$hw_model" ]] || { model=; return; }
+
+    probe_kexts
+    if [[ "$loaded_kexts" == *FakeSMC* || "$loaded_kexts" == *VirtualSMC* ]]; then
+        model="Hackintosh (SMBIOS: $hw_model)"
+    else
+        model="$hw_model"
+    fi
+}
+
+get_kernel() {
+    case $kernel_shorthand in
+        on)  kernel=$kernel_version ;;
+        off) kernel="$kernel_name $kernel_version" ;;
+    esac
+}
+
+get_uptime() {
+    local boot now s d h m
+
+    boot=$(sysctl -n kern.boottime 2>/dev/null)
+    boot=${boot/\{ sec = }
+    boot=${boot/,*}
+    [[ "$boot" =~ ^[0-9]+$ ]] || { uptime=; return; }
+
+    # Get current date in seconds.
+    now=$(date +%s)
+    s=$((now - boot))
+
+    d="$((s / 60 / 60 / 24)) days"
+    h="$((s / 60 / 60 % 24)) hours"
+    m="$((s / 60 % 60)) minutes"
+
+    # Remove plural if < 2.
+    ((${d/ *} == 1)) && d=${d/s}
+    ((${h/ *} == 1)) && h=${h/s}
+    ((${m/ *} == 1)) && m=${m/s}
+
+    # Hide empty fields.
+    ((${d/ *} == 0)) && unset d
+    ((${h/ *} == 0)) && unset h
+    ((${m/ *} == 0)) && unset m
+
+    uptime=${d:+$d, }${h:+$h, }$m
+    uptime=${uptime%', '}
+    uptime=${uptime:-$s seconds}
+
+    # Make the output of uptime smaller.
+    case $uptime_shorthand in
+        on)
+            uptime=${uptime/ minutes/ mins}
+            uptime=${uptime/ minute/ min}
+            uptime=${uptime/ seconds/ secs}
+        ;;
+
+        tiny)
+            uptime=${uptime/ days/d}
+            uptime=${uptime/ day/d}
+            uptime=${uptime/ hours/h}
+            uptime=${uptime/ hour/h}
+            uptime=${uptime/ minutes/m}
+            uptime=${uptime/ minute/m}
+            uptime=${uptime/ seconds/s}
+            uptime=${uptime//,}
+        ;;
+    esac
+}
+
+get_packages() {
+    local manager manager_string pkgs_h=0
+    local -a managers pkgs
+    packages=0
+
+    # has: Check if package manager installed.
+    # dir: Count files or dirs in a glob.
+    # pac: If packages > 0, log package manager name.
+    # tot: Count lines in command output.
+    has() { type -p "$1" >/dev/null && manager=$1; }
+    # globbing is intentional here
+    # shellcheck disable=SC2206
+    dir() { pkgs=($@); ((packages+=${#pkgs[@]})); pac "$((${#pkgs[@]}-pkgs_h))"; }
+    pac() { (($1 > 0)) && { managers+=("$1 (${manager})"); manager_string+="${manager}, "; }; }
+    tot() {
+        IFS=$'\n' read -d "" -ra pkgs <<< "$("$@")";
+        ((packages+=${#pkgs[@]}));
+        pac "$((${#pkgs[@]}-pkgs_h))";
+    }
+
+    has port  && pkgs_h=1 tot port installed && ((packages-=1))
+    pkgs_h=0
+
+    # shellcheck disable=SC2086
+    has brew && {
+        shopt -s nullglob
+        dir "$(brew_dirs)"
+        shopt -u nullglob
+    }
+
+    has pkgin && tot pkgin list
+    has dpkg  && tot dpkg-query -f '.\n' -W
+
+    has nix-store && {
+        nix-user-pkgs() {
+            nix-store -qR ~/.nix-profile
+            nix-store -qR /etc/profiles/per-user/"$USER"
+        }
+        manager=nix-system && tot nix-store -qR /run/current-system/sw
+        manager=nix-user   && tot nix-user-pkgs
+    }
+
+    if ((packages == 0)); then
+        unset packages
+
+    elif [[ $package_managers == on ]]; then
+        printf -v packages '%s, ' "${managers[@]}"
+        packages=${packages%,*}
+
+    elif [[ $package_managers == tiny ]]; then
+        packages+=" (${manager_string%,*})"
+    fi
+}
+
+brew_dirs() {
+    # Print the Homebrew Cellar and Caskroom globs.
+    # 'brew --cellar' defaults to "$(brew --prefix)/Cellar" and the prefix is
+    # the directory brew is installed in, so the standard layout is resolved
+    # without starting brew (two brew calls cost ~30 ms). Anything unusual
+    # falls back to asking brew.
+    local brew_bin prefix cellar caskroom
+    brew_bin="$(type -p brew)"
+    prefix="${brew_bin%/bin/brew}"
+
+    if [[ -z "$HOMEBREW_CELLAR" && "$prefix" != "$brew_bin" && -d "$prefix/Cellar" ]]; then
+        cellar="$prefix/Cellar"
+        caskroom="$prefix/Caskroom"
+    else
+        cellar="$(brew --cellar 2>/dev/null)"
+        caskroom="$(brew --caskroom 2>/dev/null)"
+    fi
+
+    [[ "$cellar" ]] && printf '%s/* ' "$cellar"
+    [[ "$caskroom" ]] && printf '%s/*' "$caskroom"
+}
+
+get_shell() {
+    case $shell_path in
+        on)  shell="$SHELL " ;;
+        off) shell="${SHELL##*/} " ;;
+    esac
+
+    [[ $shell_version != on ]] && return
+
+    case ${shell_name:=${SHELL##*/}} in
+        bash)
+            [[ $BASH_VERSION ]] ||
+                BASH_VERSION=$("$SHELL" -c "printf %s \"\$BASH_VERSION\"")
+
+            shell+=${BASH_VERSION/-*}
+        ;;
+
+        sh|ash|dash|es) ;;
+
+        *ksh)
+            shell+=$("$SHELL" -c "printf %s \"\$KSH_VERSION\"")
+            shell=${shell/ * KSH}
+            shell=${shell/version}
+        ;;
+
+        osh)
+            if [[ $OIL_VERSION ]]; then
+                shell+=$OIL_VERSION
+            else
+                shell+=$("$SHELL" -c "printf %s \"\$OIL_VERSION\"")
+            fi
+        ;;
+
+        tcsh)
+            shell+=$("$SHELL" -c "printf %s \$tcsh")
+        ;;
+
+        yash)
+            shell+=$("$SHELL" --version 2>&1)
+            shell=${shell/ $shell_name}
+            shell=${shell/ Yet another shell}
+            shell=${shell/Copyright*}
+        ;;
+
+        nu)
+            shell+=$("$SHELL" -c "version | get version")
+            shell=${shell/ $shell_name}
+        ;;
+
+        *)
+            shell+=$("$SHELL" --version 2>&1)
+            shell=${shell/ $shell_name}
+        ;;
+    esac
+
+    # Remove unwanted info.
+    shell=${shell/, version}
+    shell=${shell/xonsh\//xonsh }
+    shell=${shell/options*}
+    shell=${shell/\(*\)}
+}
+
+get_resolution() {
+    resolution=
+
+    if type -p screenresolution >/dev/null; then
+        resolution="$(screenresolution get 2>&1 | awk '/Display/ {printf $6 "Hz, "}')"
+        resolution="${resolution//x??@/ @ }"
+        [[ "$refresh_rate" == "off" ]] && resolution="${resolution// @ [0-9]*Hz}"
+        resolution="${resolution%, }"
+        return
+    fi
+
+    probe_displays
+
+    # Handles both report layouts:
+    #   'Resolution: 1920 x 1080 @ 60 Hz' and 'Resolution: 2880 x 1800 Retina'
+    #   'Resolution: 5120 x 2880 (5K...)' + 'UI Looks like: 2560 x 1440 @ 60.00Hz'
+    local line value px_w px_h ui_w hz retina
+
+    flush_display() {
+        [[ "$px_w" ]] || return
+        local entry="${px_w}x${px_h}"
+        [[ "$retina" || ( "$ui_w" && $((ui_w * 2)) == "$px_w" ) ]] && entry+="@2x"
+        hz="${hz%.00}"
+        hz="${hz%.0}"
+        [[ "$refresh_rate" == "on" && "$hz" && "$hz" != 0 ]] && entry+=" @ ${hz}Hz"
+        resolution+="${entry}, "
+        px_w= px_h= ui_w= hz= retina=
+    }
+
+    while read -r line; do
+        case $line in
+            "Resolution:"*)
+                flush_display
+                value="${line#Resolution: }"
+                [[ "$value" =~ ^([0-9]+)\ x\ ([0-9]+) ]] || continue
+                px_w="${BASH_REMATCH[1]}"
+                px_h="${BASH_REMATCH[2]}"
+                [[ "$value" =~ @\ ([0-9.]+)\ ?Hz ]] && hz="${BASH_REMATCH[1]}"
+                [[ "$value" == *Retina* ]] && retina=1
+            ;;
+
+            "UI Looks like:"*)
+                value="${line#UI Looks like: }"
+                [[ "$value" =~ ^([0-9]+)\ x ]] && ui_w="${BASH_REMATCH[1]}"
+                [[ -z "$hz" && "$value" =~ @\ ([0-9.]+)\ ?Hz ]] && hz="${BASH_REMATCH[1]}"
+            ;;
+        esac
+    done <<< "$displays_report"
+    flush_display
+
+    resolution="${resolution%, }"
+}
+
+get_de() {
+    de=Aqua
+}
+
+get_wm() {
+    # If function was run, stop here.
+    ((wm_run == 1)) && return
+
+    local ps_line
+    ps_line=$(ps -e | grep -o \
+        -e "[S]pectacle" \
+        -e "[A]methyst" \
+        -e "[k]wm" \
+        -e "[c]hun[k]wm" \
+        -e "[y]abai" \
+        -e "[R]ectangle")
+
+    case $ps_line in
+        *chunkwm*)   wm=chunkwm ;;
+        *kwm*)       wm=Kwm ;;
+        *yabai*)     wm=yabai ;;
+        *Amethyst*)  wm=Amethyst ;;
+        *Spectacle*) wm=Spectacle ;;
+        *Rectangle*) wm=Rectangle ;;
+        *)           wm="Quartz Compositor" ;;
+    esac
+
+    wm_run=1
+}
+
+get_wm_theme() {
+    ((wm_run != 1)) && get_wm
+
+    local style accent
+
+    # 'defaults' goes through cfprefsd, so it sees unsaved preference changes
+    # that reading the plist file directly would miss.
+    style="$(defaults read -g AppleInterfaceStyle 2>/dev/null)"
+    accent="$(defaults read -g AppleAccentColor 2>/dev/null)"
+
+    [[ "$style" ]] || style=Light
+
+    case $accent in
+        -1) accent=Graphite ;;
+        0)  accent=Red ;;
+        1)  accent=Orange ;;
+        2)  accent=Yellow ;;
+        3)  accent=Green ;;
+        5)  accent=Purple ;;
+        6)  accent=Pink ;;
+        *)  accent=Blue ;;
+    esac
+
+    wm_theme="$accent ($style)"
+}
+
+get_term() {
+    # If function was run, stop here.
+    ((term_run == 1)) && return
+
+    detect_terminal
+
+    case $term_id in
+        ghostty)
+            term="Ghostty"
+            [[ "$term_mux" == tmux ]] && term+=" (tmux)"
+        ;;
+
+        *)
+            case $TERM_PROGRAM in
+                "iTerm.app")    term="iTerm2" ;;
+                "Terminal.app") term="Apple Terminal" ;;
+                "Hyper")        term="HyperTerm" ;;
+                *)              term="${TERM_PROGRAM/\.app}" ;;
+            esac
+        ;;
+    esac
+
+    [[ "$SSH_CONNECTION" ]] && term="$SSH_TTY"
+
+    # Check $PPID for terminal emulator.
+    local parent name
+    while [[ -z "$term" ]]; do
+        parent="$(get_ppid "$parent")"
+        [[ -z "$parent" ]] && break
+        name="$(get_process_name "$parent")"
+
+        case ${name// } in
+            "${SHELL/*\/}"|*"sh"|"screen"|"su"*|"newgrp") ;;
+
+            "login"*|*"Login"*|"init"|"(init)")
+                term="$(tty)"
+            ;;
+
+            "ruby"|"1"|"tmux"*|"sshd"*|"python"*|\
+            "USER"*"PID"*|"launchd"*)
+                break
+            ;;
+
+            *"nvim")           term="Neovim Terminal" ;;
+            *"NeoVimServer"*)  term="VimR Terminal" ;;
+            *"ghostty")        term="Ghostty" ;;
+
+            *)
+                term="${name##*/}"
+
+                # Fix wrapper names in Nix.
+                [[ $term == .*-wrapped ]] && {
+                   term="${term#.}"
+                   term="${term%-wrapped}"
+                }
+            ;;
+        esac
+    done
+
+    # Log that the function was run.
+    term_run=1
+}
+
+detect_terminal() {
+    # Identify the terminal emulator the output is drawn by.
+    #   term_id:  normalized emulator id ('ghostty' or '' when not special-cased)
+    #   term_mux: 'tmux' when running inside tmux
+    #
+    # Ghostty sets TERM_PROGRAM=ghostty and TERM=xterm-ghostty, but users may
+    # override TERM (term = xterm-256color), so TERM alone is not trusted.
+    # Inside tmux, TERM_PROGRAM is 'tmux' and the environment may be stale, so
+    # the attached client's terminal is asked for instead: tmux records each
+    # client's XTVERSION reply (client_termtype) and TERM (client_termname).
+    ((terminal_detected)) && return
+    terminal_detected=1
+    term_id=
+    term_mux=
+
+    if [[ "$TMUX" ]]; then
+        term_mux=tmux
+        local client
+        client="$(tmux display-message -p ${TMUX_PANE:+-t "$TMUX_PANE"} \
+                  '#{client_termtype}|#{client_termname}' 2>/dev/null)"
+        [[ "$client" == *ghostty* ]] && term_id=ghostty
+        return
+    fi
+
+    case $TERM_PROGRAM in
+        ghostty) term_id=ghostty ;;
+        "")
+            if [[ "$TERM" == xterm-ghostty ]]; then
+                term_id=ghostty
+            elif [[ "$GHOSTTY_RESOURCES_DIR" && "$TERM" != screen* && "$TERM" != tmux* ]]; then
+                term_id=ghostty
+            fi
+        ;;
+    esac
+}
+
+ghostty_binary() {
+    local bin
+    for bin in "${GHOSTTY_BIN_DIR:+$GHOSTTY_BIN_DIR/ghostty}" "$(type -p ghostty)" \
+               /Applications/Ghostty.app/Contents/MacOS/ghostty; do
+        [[ -x "$bin" ]] && { printf '%s\n' "$bin"; return 0; }
+    done
+    return 1
+}
+
+get_term_font() {
+    ((term_run != 1)) && get_term
+
+    case $term_id in
+        ghostty)
+            # '+show-config' prints the effective configuration; an empty
+            # 'font-family' means Ghostty's embedded default, JetBrains Mono.
+            local bin key value family size
+            bin="$(ghostty_binary)" || return
+
+            while IFS='=' read -r key value; do
+                key="${key%"${key##*[![:space:]]}"}"
+                value="${value#"${value%%[![:space:]]*}"}"
+                case $key in
+                    font-family) [[ -z "$family" ]] && family="$value" ;;
+                    font-size)   size="$value" ;;
+                esac
+            done < <("$bin" +show-config 2>/dev/null)
+
+            family="$(trim_quotes "$family")"
+            term_font="${family:-JetBrains Mono}${size:+ $size}"
+            return
+        ;;
+    esac
+
+    case $term in
+        "alacritty"*)
+            shopt -s nullglob
+            confs=({$XDG_CONFIG_HOME,$HOME}/{alacritty,}/{.,}alacritty.ym?)
+            shopt -u nullglob
+
+            [[ -f "${confs[0]}" ]] || return
+
+            term_font="$(awk '/normal:/ {while (!/family:/ || /#/)
+                         {if (!getline) {exit}} print; exit}' "${confs[0]}")"
+            term_font="${term_font/*family:}"
+            term_font="${term_font/$'\n'*}"
+            term_font="${term_font/\#*}"
+            term_font="${term_font//\"}"
+        ;;
+
+        "Apple_Terminal")
+            term_font="$(osascript <<END
+                         tell application "Terminal" to font name of window frontmost
+END
+)"
+        ;;
+
+        "iTerm2")
+            # Unfortunately the profile name is not unique, but it seems to be the only thing
+            # that identifies an active profile. There is the "id of current session of current win-
+            # dow" though, but that does not match to a guid in the plist.
+            # So, be warned, collisions may occur!
+            # See: https://groups.google.com/forum/#!topic/iterm2-discuss/0tO3xZ4Zlwg
+            local current_profile_name profiles_count profile_name diff_font
+
+            current_profile_name="$(osascript <<END
+                                    tell application "iTerm2" to profile name \
+                                    of current session of current window
+END
+)"
+
+            # Warning: Dynamic profiles are not taken into account here!
+            # https://www.iterm2.com/documentation-dynamic-profiles.html
+            font_file="${HOME}/Library/Preferences/com.googlecode.iterm2.plist"
+
+            # Count Guids in "New Bookmarks"; they should be unique
+            profiles_count="$(PlistBuddy -c "Print ':New Bookmarks:'" "$font_file" | \
+                              grep -w -c "Guid")"
+
+            for ((i=0; i<profiles_count; i++)); do
+                profile_name="$(PlistBuddy -c "Print ':New Bookmarks:${i}:Name:'" "$font_file")"
+
+                if [[ "$profile_name" == "$current_profile_name" ]]; then
+                    # "Normal Font"
+                    term_font="$(PlistBuddy -c "Print ':New Bookmarks:${i}:Normal Font:'" \
+                                 "$font_file")"
+
+                    # Font for non-ascii characters
+                    # Only check for a different non-ascii font, if the user checked
+                    # the "use a different font for non-ascii text" switch.
+                    diff_font="$(PlistBuddy -c "Print ':New Bookmarks:${i}:Use Non-ASCII Font:'" \
+                                 "$font_file")"
+
+                    if [[ "$diff_font" == "true" ]]; then
+                        non_ascii="$(PlistBuddy -c "Print ':New Bookmarks:${i}:Non Ascii Font:'" \
+                                     "$font_file")"
+
+                        [[ "$term_font" != "$non_ascii" ]] && \
+                            term_font="$term_font (normal) / $non_ascii (non-ascii)"
+                    fi
+                fi
+            done
+        ;;
+
+        "Hyper"*)
+            term_font="$(awk -F':|,' '/fontFamily/ {print $2; exit}' "${HOME}/.hyper.js")"
+            term_font="$(trim_quotes "$term_font")"
+        ;;
+
+        "kitty"*)
+            term_font="from kitty.cli import *; o = create_default_opts(); \
+                       print(f'{o.font_family} {o.font_size}')"
+            term_font="$(kitty +runpy ''"$term_font"'')"
+        ;;
+    esac
+}
+
+get_cpu() {
+    local cores
+
+    cpu="$(sysctl -n machdep.cpu.brand_string 2>/dev/null)"
+    [[ "$cpu" ]] || return
+
+    # Get CPU cores.
+    case $cpu_cores in
+        "logical" | "on") cores="$(sysctl -n hw.logicalcpu_max 2>/dev/null)" ;;
+        "physical")       cores="$(sysctl -n hw.physicalcpu_max 2>/dev/null)" ;;
+    esac
+
+    # Remove un-needed patterns from cpu output.
+    cpu="${cpu//(TM)}"
+    cpu="${cpu//(tm)}"
+    cpu="${cpu//(R)}"
+    cpu="${cpu//(r)}"
+    cpu="${cpu//CPU}"
+    cpu="${cpu//Processor}"
+    cpu="${cpu//Dual-Core}"
+    cpu="${cpu//Quad-Core}"
+    cpu="${cpu//Six-Core}"
+    cpu="${cpu//Eight-Core}"
+    cpu="${cpu//[1-9][0-9]-Core}"
+    cpu="${cpu//[0-9]-Core}"
+    cpu="${cpu//Core / }"
+    cpu="${cpu//Core2/Core 2}"
+
+    # Trim spaces from core output
+    cores="${cores//[[:space:]]}"
+
+    # Remove CPU brand from the output.
+    if [[ "$cpu_brand" == "off" ]]; then
+        cpu="${cpu/Intel }"
+        cpu="${cpu/Core? Duo }"
+    fi
+
+    # Intel brand strings carry their speed ("... @ 2.30GHz").
+    [[ "$cpu_speed" == "off" ]] && cpu="${cpu/ @*}"
+
+    # Add CPU cores to the output. Apple silicon names have no '@' part.
+    if [[ "$cpu_cores" != "off" && "$cores" ]]; then
+        if [[ "$cpu" == *@* ]]; then
+            cpu="${cpu/@/(${cores}) @}"
+        else
+            cpu="$(trim "$cpu") ($cores)"
+        fi
+    fi
+}
+
+get_gpu() {
+    local line
+    gpu=
+
+    # Apple Silicon has one integrated GPU, which IOKit names without the slow
+    # 'system_profiler' call.
+    if is_apple_silicon; then
+        while IFS= read -r line; do
+            case $line in
+                *'"model" = "'*)
+                    line="${line#*\"model\" = \"}"
+                    gpu="${line%\"}"
+                    break
+                ;;
+            esac
+        done < <(ioreg -rc AGXAccelerator -d1 2>/dev/null)
+    fi
+
+    if [[ -z "$gpu" ]]; then
+        probe_displays
+
+        while IFS= read -r line; do
+            case $line in
+                *"Chipset Model:"*) gpu+="${line#*: }, " ;;
+            esac
+        done <<< "$displays_report"
+
+        gpu="${gpu%, }"
+    fi
+
+    if [[ "$gpu_brand" == "off" ]]; then
+        gpu="${gpu//AMD }"
+        gpu="${gpu//NVIDIA }"
+        gpu="${gpu//Intel }"
+    fi
+}
+
+get_memory() {
+    local hw_pagesize mem_total mem_used mem_perc mem_label pages_app pages_wired
+    local pages_compressed line pageable purgeable mem_bytes
+
+    hw_pagesize="$(sysctl -n hw.pagesize 2>/dev/null)"
+    mem_bytes="$(sysctl -n hw.memsize 2>/dev/null)"
+    pageable="$(sysctl -n vm.page_pageable_internal_count 2>/dev/null)"
+    purgeable="$(sysctl -n vm.page_purgeable_count 2>/dev/null)"
+
+    [[ "$hw_pagesize" =~ ^[0-9]+$ && "$mem_bytes" =~ ^[0-9]+$ ]] || { memory=; return; }
+
+    # One vm_stat call provides both the wired and compressed page counts.
+    while IFS= read -r line; do
+        case $line in
+            "Pages wired down:"*)             pages_wired="${line##* }" ;;
+            "Pages occupied by compressor:"*) pages_compressed="${line##* }" ;;
+        esac
+    done < <(vm_stat 2>/dev/null)
+
+    pages_wired="${pages_wired//[!0-9]}"
+    pages_compressed="${pages_compressed//[!0-9]}"
+    pages_app="$((${pageable:-0} - ${purgeable:-0}))"
+
+    mem_total="$((mem_bytes / 1024 / 1024))"
+    mem_used="$(((pages_app + ${pages_wired:-0} + ${pages_compressed:-0}) * hw_pagesize / 1024 / 1024))"
+
+    # Bars are always computed from whole MiB values.
+    bar_data="$mem_used $mem_total"
+
+    [[ "$memory_percent" == "on" ]] && ((mem_perc=mem_used * 100 / mem_total))
+
+    case $memory_unit in
+        gib)
+            mem_used=$(awk '{printf "%.2f", $1 / $2}' <<< "$mem_used 1024")
+            mem_total=$(awk '{printf "%.2f", $1 / $2}' <<< "$mem_total 1024")
+            mem_label=GiB
+        ;;
+
+        kib)
+            mem_used=$((mem_used * 1024))
+            mem_total=$((mem_total * 1024))
+            mem_label=KiB
+        ;;
+    esac
+
+    memory="${mem_used}${mem_label:-MiB} / ${mem_total}${mem_label:-MiB} ${mem_perc:+(${mem_perc}%)}"
+}
+
+get_gpu_driver() {
+    probe_kexts
+
+    if [[ "$loaded_kexts" == *GeForceWeb* ]]; then
+        gpu_driver="NVIDIA Web Driver"
+    else
+        gpu_driver="macOS Default Graphics Driver"
+    fi
+}
+
+get_macos_disk_usage() {
+    # Query the same capacity values macOS uses for its storage display.
+    local total avail used
+    read -r total avail < <(osascript -l JavaScript -e '
+        ObjC.import("Foundation");
+        var k = ["NSURLVolumeTotalCapacityKey",
+                 "NSURLVolumeAvailableCapacityForImportantUsageKey"];
+        var r = $.NSURL.fileURLWithPath("/").resourceValuesForKeysError($(k), null);
+        k.map(function (x) { return r.objectForKey(x).js; }).join(" ");
+    ' 2>/dev/null)
+
+    [[ $total =~ ^[0-9]+$ && $avail =~ ^[0-9]+$ && $total -gt 0 ]] || return 1
+
+    used=$((total - avail))
+    disk_total_gb="$(((total + 500000000) / 1000000000))G"
+    disk_used_gb="$(((used + 500000000) / 1000000000))G"
+    disk_used_perc=$(((used * 100 + total / 2) / total))
+}
+
+get_disk() {
+    type -p df &>/dev/null ||
+        { err "Disk requires 'df' to function. Install 'df' to get disk info."; return; }
+
+    local disk disk_perc disk_sub i
+    local -a disks disk_info disk_targets
+    local data_vol=/System/Volumes/Data
+
+    # On APFS, '/' is the sealed read-only system volume and only reports the
+    # OS footprint. User data lives on the Data volume, so query it instead.
+    disk_targets=("${disk_show[@]:-/}")
+    if [[ -d $data_vol ]]; then
+        for i in "${!disk_targets[@]}"; do
+            [[ ${disk_targets[i]} == / ]] && disk_targets[i]=$data_vol
+        done
+    fi
+
+    # Create an array called 'disks' where each element is a separate line from
+    # df's output. We then unset the first element which removes the column titles.
+    # Use decimal units (GB) to match what macOS reports in Finder/Settings.
+    IFS=$'\n' read -d "" -ra disks <<< "$(df -P -H "${disk_targets[@]}")"
+    unset "disks[0]"
+
+    # Stop here if 'df' fails to print disk info.
+    [[ ${disks[*]} ]] || {
+        err "Disk: df failed to print the disks, make sure the disk_show array is set properly."
+        return
+    }
+
+    for disk in "${disks[@]}"; do
+        # Create a second array and make each element split at whitespace this time.
+        IFS=" " read -ra disk_info <<< "$disk"
+        disk_perc=${disk_info[${#disk_info[@]} - 2]/\%}
+
+        disk=${disk_info[${#disk_info[@]} - 4]/i}
+        disk+=" / "
+        disk+=${disk_info[${#disk_info[@]} - 5]/i}
+
+        # Present the Data volume as '/' and report usage like macOS does:
+        # purgeable space (caches, local snapshots) counts as free, so
+        # used = total - available for important usage.
+        if [[ ${disk_info[${#disk_info[@]} - 1]} == "$data_vol" ]]; then
+            disk_info[${#disk_info[@]} - 1]=/
+            get_macos_disk_usage && {
+                disk="$disk_used_gb / $disk_total_gb"
+                disk_perc=$disk_used_perc
+            }
+        fi
+        [[ $disk_percent != off ]] && disk+=" (${disk_perc}%)"
+
+        case $disk_subtitle in
+            name)
+                disk_sub=${disk_info[*]::${#disk_info[@]} - 5}
+            ;;
+
+            dir)
+                disk_sub=${disk_info[${#disk_info[@]} - 1]/*\/}
+                disk_sub=${disk_sub:-${disk_info[${#disk_info[@]} - 1]}}
+            ;;
+
+            none) disk_sub= ;;
+
+            *)
+                disk_sub=${disk_info[${#disk_info[@]} - 1]}
+            ;;
+        esac
+
+        # Append '(disk mount point)' to the subtitle.
+        if [[ "$subtitle" ]]; then
+            add_result "$subtitle${disk_sub:+ ($disk_sub)}" "$disk" "$disk_perc 100" "$disk_display"
+        else
+            add_result "$disk_sub" "$disk" "$disk_perc 100" "$disk_display"
+        fi
+    done
+}
+
+get_battery() {
+    local report line state
+    local -a fields
+    battery=
+
+    report="$(pmset -g batt 2>/dev/null)"
+
+    while IFS= read -r line; do
+        [[ "$line" =~ ([0-9]+)% ]] || continue
+        [[ "$battery" ]] || battery="${BASH_REMATCH[1]}%"
+
+        [[ "$line" == *";"* && -z "$state" ]] && {
+            IFS=$' \t' read -ra fields <<< "$line"
+            state="${fields[3]}"
+        }
+    done <<< "$report"
+
+    [[ "$battery" ]] || return
+    [[ "$state" == "charging;" ]] && battery+=" Charging"
+    bar_data="${battery/\%*} 100"
+}
+
+get_local_ip() {
+    local interface
+
+    if [[ "${local_ip_interface[0]}" == "auto" ]]; then
+        interface="$(route -n get default 2>/dev/null | awk -F': ' '/interface/ {printf $2; exit}')"
+        local_ip="$(ipconfig getifaddr "$interface" 2>/dev/null)"
+    else
+        for interface in "${local_ip_interface[@]}"; do
+            local_ip="$(ipconfig getifaddr "$interface" 2>/dev/null)"
+            if [[ -n "$local_ip" ]]; then
+                add_result "$interface" "$local_ip"
+            else
+                err "Local IP: Could not detect local ip for $interface"
+            fi
+        done
+    fi
+}
+
+get_users() {
+    users="$(who | awk '!seen[$1]++ {printf $1 ", "}')"
+    users="${users%\,*}"
+}
+
+get_locale() {
+    locale="$sys_locale"
+}
+
+get_ppid() {
+    # Get parent process ID of PID.
+    ppid="$(ps -p "${1:-$PPID}" -o ppid=)"
+    printf "%s" "$(trim "$ppid")"
+}
+
+get_process_name() {
+    # Get PID name.
+    name="$(ps -p "${1:-$PPID}" -o comm=)"
+    printf "%s" "$name"
+}
+
+# COLLECTION
+#
+# 'info' and 'prin' are the configuration API. They record entries; nothing is
+# printed until a renderer walks the records.
+
+rec_n=0
+
+record() {
+    # kind label value bar_data display_mode
+    # With 'rec_at' set, fill that reserved slot instead of appending.
+    local i=${rec_at:-$rec_n}
+    rec_kind[i]="$1"
+    rec_label[i]="$2"
+    rec_value[i]="$3"
+    rec_bar[i]="$4"
+    rec_mode[i]="$5"
+    [[ "$rec_at" ]] || ((rec_n++))
+}
+
+add_result() {
+    # Used by collectors that produce several lines (disk, local_ip).
+    record line "$1" "$2" "$3" "$4"
+    prin=1
+}
+
+is_field() {
+    # 'underline' and 'cols' are layout rows, not detected values.
+    case $1 in
+        underline | cols) return 0 ;;
+    esac
+
+    [[ "$(type -t "get_$1")" == function ]]
+}
+
+info() {
+    local name="${2:-$1}" output mode_var
+
+    # Save subtitle value.
+    subtitle=
+    [[ "$2" ]] && subtitle="$1"
+
+    # Make sure that $prin is unset.
+    unset -v prin bar_data
+
+    case $name in
+        public_ip | song)
+            err "Info: '${name}' has been removed; ignoring '${1}'."
+            unset -v subtitle
+            return
+        ;;
+    esac
+
+    if ! is_field "$name"; then
+        err "Info: Couldn't detect ${1}."
+        unset -v subtitle
+        return
+    fi
+
+    # Fields that need the background 'system_profiler' are detected after
+    # every other field, so waiting for it overlaps with their work. Reserve
+    # the slot now to keep the line order; resolve_deferred() fills it.
+    if ((displays_prefetched && defer_displays)) && [[ -z "$info_slot" ]] &&
+       [[ "$name" == gpu || "$name" == resolution ]]; then
+        record deferred "$1" "$2"
+        unset -v subtitle
+        return
+    fi
+
+    # Call the function.
+    case $name in
+        underline | cols) ;;
+        *) "get_${name}" ;;
+    esac
+
+    case $name in
+        title)     record title "$user" "$hostname" ;;
+        underline) record underline ;;
+        cols)      record cols ;;
+    esac
+
+    case $name in
+        title | underline | cols) prin=1 ;;
+    esac
+
+    # If the get_func function recorded its own lines, stop here.
+    [[ "$prin" ]] && { unset -v subtitle; return; }
+
+    # Update the variable.
+    output="$(trim "${!name}")"
+    mode_var="${name}_display"
+
+    if [[ "$2" && "${output// }" ]]; then
+        rec_at=$info_slot record line "$1" "$output" "$bar_data" "${!mode_var}"
+
+    elif [[ "${output// }" ]]; then
+        rec_at=$info_slot record line "" "$output" "$bar_data" "${!mode_var}"
+
+    else
+        err "Info: Couldn't detect ${1}."
+    fi
+
+    unset -v subtitle
+}
+
+check_deferral() {
+    # Deferring GPU/Resolution (see info) is only safe when nothing can observe
+    # it: the built-in detectors, and with $1 (the body of print_info) a
+    # layout made only of 'info' lines, so no later code reads $gpu or
+    # $resolution and no override records lines out of order.
+    local line first=1
+    defer_displays=
+
+    [[ "$(declare -f get_gpu get_resolution)" == "$builtin_display_funcs" ]] || return 0
+
+    if [[ "$1" ]]; then
+        while IFS= read -r line; do
+            # Skip the 'print_info ()' header and the closing brace.
+            [[ "$first" ]] && { first=; continue; }
+            [[ "$line" == "}" ]] && continue
+            layout_parse_line "$line"
+            (($? == 2)) && return 0
+        done <<< "$1"
+    fi
+
+    defer_displays=1
+}
+
+resolve_deferred() {
+    # Detect the fields info() deferred and fill their reserved slots. A slot
+    # whose field detects nothing stays 'none' and renders nothing.
+    local i
+    for ((i = 0; i < rec_n; i++)); do
+        [[ "${rec_kind[i]}" == deferred ]] || continue
+        rec_kind[i]=none
+        info_slot=$i info "${rec_label[i]}" ${rec_value[i]:+"${rec_value[i]}"}
+    done
+}
+
+prin() {
+    # If $2 doesn't exist we format $1 as info.
+    if [[ "$(trim "$1")" && "$2" ]]; then
+        record line "$1" "$2"
+    else
+        record line "" "${2:-$1}"
+    fi
+
+    # Log that prin was used.
+    prin=1
+}
+
+# RENDERERS
+
+render_json() {
+    # Only labelled lines have a key; title, underline, color blocks and
+    # unlabelled lines have no JSON representation.
+    local i key
+
+    printf '{\n'
+    for ((i = 0; i < rec_n; i++)); do
+        [[ "${rec_kind[i]}" == line && "${rec_label[i]}" && "${rec_value[i]}" ]] || continue
+        json_escape "${rec_label[i]}"
+        key="$json_out"
+        json_escape "${rec_value[i]}"
+        printf '    "%s": "%s",\n' "$key" "$json_out"
+    done
+    json_escape "$version"
+    printf '    "Version": "%s"\n' "$json_out"
+    printf '}\n'
+}
+
+render_text() {
+    local i value
+
+    for ((i = 0; i < rec_n; i++)); do
+        case ${rec_kind[i]} in
+            title)
+                render_line "" \
+                    "${title_color}${bold}${rec_label[i]}${at_color}@${title_color}${bold}${rec_value[i]}"
+            ;;
+
+            underline) render_underline ;;
+            cols)      render_cols ;;
+            raw)       printf '%b' "${rec_value[i]}" ;;
+
+            line)
+                value="${rec_value[i]}"
+                [[ "${rec_bar[i]}" ]] && value="$(apply_bar "$value" "${rec_bar[i]}" "${rec_mode[i]}")"
+                render_line "${rec_label[i]}" "$value"
+            ;;
+        esac
+    done
+}
+
+render_line() {
+    local string subtitle_color="$subtitle_color"
+
+    # If $2 doesn't exist we format $1 as info.
+    if [[ "$(trim "$1")" && "$2" ]]; then
+        string="${1}${2:+: $2}"
+    else
+        string="${2:-$1}"
+        subtitle_color="$info_color"
+    fi
+
+    string="$(trim "${string//$'\e[0m'}")"
+    length="$(strip_sequences "$string")"
+    str_width "$length"
+    length="$str_width_out"
+
+    # Format the output.
+    string="${string/:/${reset}${colon_color}${separator:=:}${info_color}}"
+    string="${subtitle_color}${bold}${string}"
+
+    # Print the info.
+    printf '%b\n' "${text_padding:+\e[${text_padding}C}${string//\\n}${reset}"
+
+    # Calculate info height.
+    ((++info_height))
+}
+
+render_underline() {
+    [[ "$underline_enabled" == "on" ]] && {
+        printf -v underline "%${length}s"
+        printf '%b%b\n' "${text_padding:+\e[${text_padding}C}${underline_color}" \
+                        "${underline// /$underline_char}${reset}"
+    }
+
+    ((++info_height))
+    length=
+}
+
+render_cols() {
+    local blocks blocks2 cols block_spaces width_spaces n esc=$'\e' nl=$'\n'
+
+    [[ "$color_blocks" == "on" ]] || return
+
+    # Convert the width to space chars.
+    printf -v width_spaces "%${block_width}s"
+
+    # Generate the string.
+    for ((n = block_range[0]; n <= block_range[1]; n++)); do
+        case $n in
+            [0-7])
+                printf -v blocks  '%b\e[3%bm\e[4%bm%b' "$blocks" "$n" "$n" "$width_spaces"
+            ;;
+
+            *)
+                printf -v blocks2 '%b\e[38;5;%bm\e[48;5;%bm%b' "$blocks2" "$n" "$n" "$width_spaces"
+            ;;
+        esac
+    done
+
+    # Convert height into spaces.
+    printf -v block_spaces "%${block_height}s"
+
+    # Convert the spaces into rows of blocks.
+    [[ "$blocks"  ]] && cols+="${block_spaces// /${blocks}${esc}[mnl}"
+    [[ "$blocks2" ]] && cols+="${block_spaces// /${blocks2}${esc}[mnl}"
+
+    # Add newlines to the string.
+    cols=${cols%%nl}
+    cols=${cols//nl/${nl}${esc}[${text_padding}C}
+
+    # Add block height to info height.
+    ((info_height+=block_range[1]>7?block_height+2:block_height+1))
+
+    case $col_offset in
+        "auto") printf '\n\e[%bC%b\n' "$text_padding" "${cols}" ;;
+        *) printf '\n\e[%bC%b\n' "$col_offset" "${cols}" ;;
+    esac
+}
+
+apply_bar() {
+    # value "elapsed total" mode
+    local used="${2% *}" total="${2#* }"
+
+    case $3 in
+        "bar")     bar "$used" "$total" ;;
+        "infobar") printf '%s %s' "$1" "$(bar "$used" "$total")" ;;
+        "barinfo") printf '%s%s %s' "$(bar "$used" "$total")" "$info_color" "$1" ;;
+        "perc")    printf '%s%% %s' "$((used * 100 / total))" "$(bar "$used" "$total")" ;;
+        *)         printf '%s' "$1" ;;
+    esac
+}
+
+bar() {
+    local elapsed prog total bar
+
+    # Get the values.
+    elapsed="$(($1 * bar_length / $2))"
+
+    # Create the bar with spaces.
+    printf -v prog  "%${elapsed}s"
+    printf -v total "%$((bar_length - elapsed))s"
+
+    # Set the colors and swap the spaces for $bar_char_.
+    bar+="${bar_color_elapsed}${prog// /${bar_char_elapsed}}"
+    bar+="${bar_color_total}${total// /${bar_char_total}}"
+
+    # Borders.
+    [[ "$bar_border" == "on" ]] && \
+        bar="$(color fg)[${bar}$(color fg)]"
+
+    printf "%b" "${bar}${info_color}"
+}
+
+dynamic_prompt() {
+    [[ "$image_backend" == "off" ]] && { printf '\n'; return; }
+
+    # If the ascii art is taller than the info.
+    ((lines=lines>info_height?lines-info_height+1:1))
+
+    printf -v nlines "%${lines}s"
+    printf "%b" "${nlines// /\\n}"
+}
+
+# TERMINAL STATE
+
+terminal_setup() {
+    # Hide the cursor and disable line wrap while drawing; always restore them,
+    # including on errors and interruption.
+    terminal_dirty=1
+    trap 'terminal_restore' EXIT
+    trap 'terminal_restore; trap - INT; kill -INT $$' INT
+    trap 'terminal_restore; trap - TERM; kill -TERM $$' TERM
+    trap 'terminal_restore; trap - HUP; kill -HUP $$' HUP
+    printf '\e[?25l\e[?7l'
+}
+
+terminal_restore() {
+    ((terminal_dirty)) || return 0
+    terminal_dirty=0
+    printf '\e[?25h\e[?7h'
+}
+
+# LOGO
+
+draw_logo() {
+    # Only ASCII art is drawn: the bundled macOS logo or a custom ASCII file
+    # or string. Image backends and the wallpaper lookup were removed.
+    case ${image_backend:-ascii} in
+        "ascii") print_ascii ;;
+        "off") ;;
+        *)
+            err "Logo: Image backends were removed; '$image_backend' falls back to the ascii logo."
+            image_backend="ascii"
+            print_ascii
+        ;;
+    esac
+
+    # Set cursor position next to the logo.
+    [[ "$image_backend" != "off" ]] && printf '\e[%sA\e[9999999D' "${lines:-0}"
+}
+
+print_ascii() {
+    local line ascii_line_width
+
+    case $image_source in
+        "auto" | "ascii") ;;
+
+        "wall" | "wallpaper")
+            err "Logo: Wallpaper display was removed, using the macOS logo."
+        ;;
+
+        *)
+            if [[ ! -f "$image_source" ]]; then
+                ascii_data="$image_source"
+            elif [[ "$image_source" =~ \.(png|jpe?g|svg|gif|heic|tiff?|bmp|webp)$ ]]; then
+                err "Logo: Images are no longer displayed ('$image_source'), using the macOS logo."
+            else
+                ascii_data="$(< "$image_source")"
+            fi
+        ;;
+    esac
+
+    # Calculate size of ascii file in line length / line count.
+    while IFS=$'\n' read -r line; do
+        line=${line//\\\\/\\}
+        str_width "$line"
+        ascii_line_width="$str_width_out"
+        ((++lines,ascii_line_width>ascii_len)) && ascii_len="$ascii_line_width"
+    done <<< "${ascii_data//\$\{??\}}"
+
+    # Fallback if file not found.
+    ((lines==1)) && {
+        lines=
+        ascii_len=
+        image_source=auto
+        get_distro_ascii
+        print_ascii
+        return
+    }
+
+    # Colors.
+    ascii_data="${ascii_data//\$\{c1\}/$c1}"
+    ascii_data="${ascii_data//\$\{c2\}/$c2}"
+    ascii_data="${ascii_data//\$\{c3\}/$c3}"
+    ascii_data="${ascii_data//\$\{c4\}/$c4}"
+    ascii_data="${ascii_data//\$\{c5\}/$c5}"
+    ascii_data="${ascii_data//\$\{c6\}/$c6}"
+
+    ((text_padding=ascii_len+gap))
+    printf '%b\n' "$ascii_data${reset}"
+}
+
+# TEXT FORMATTING
+
+get_bold() {
+    case $ascii_bold in
+        "on")  ascii_bold='\e[1m' ;;
+        "off") ascii_bold="" ;;
+    esac
+
+    case $bold in
+        "on")  bold='\e[1m' ;;
+        "off") bold="" ;;
+    esac
+}
+
+trim() {
+    set -f
+    # shellcheck disable=2048,2086
+    set -- $*
+    printf '%s\n' "${*//[[:space:]]/}"
+    set +f
+}
+
+json_escape() {
+    # Escape a string for use inside a JSON string literal (RFC 8259).
+    # Bytes >= 0x80 pass through unchanged so valid UTF-8 stays valid.
+    local LC_ALL=C s=$1 i ch hex
+    s=${s//\\/\\\\}
+    s=${s//\"/\\\"}
+
+    if [[ $s == *[[:cntrl:]]* ]]; then
+        s=${s//$'\b'/\\b}
+        s=${s//$'\f'/\\f}
+        s=${s//$'\n'/\\n}
+        s=${s//$'\r'/\\r}
+        s=${s//$'\t'/\\t}
+
+        for ((i = 1; i < 32; i++)); do
+            printf -v hex '%02x' "$i"
+            printf -v ch "\\x$hex"
+            [[ $s == *"$ch"* ]] && s=${s//"$ch"/\\u00$hex}
+        done
+    fi
+
+    json_out=$s
+}
+
+str_width() {
+    # Width of a string in terminal cells. Bash 3.2 has no wcwidth(), so UTF-8
+    # is decoded by hand: East Asian wide and astral-plane (emoji) characters
+    # take two cells, combining marks and zero-width characters take none.
+    local s="$1" chars bytes i b b1 b2 cp width=0
+
+    LC_ALL="$utf8_locale"
+    chars=${#s}
+    LC_ALL=C
+    bytes=${#s}
+
+    ((chars == bytes)) && { str_width_out=$bytes; return; }
+
+    for ((i = 0; i < bytes; i++)); do
+        printf -v b '%d' "'${s:i:1}"
+        ((b < 0)) && ((b += 256))
+
+        if ((b < 0x80)); then
+            ((width++))
+
+        elif ((b >= 0xF0)); then
+            ((width += 2, i += 3))
+
+        elif ((b >= 0xE0)); then
+            printf -v b1 '%d' "'${s:i+1:1}"
+            printf -v b2 '%d' "'${s:i+2:1}"
+            ((cp = ((b & 0x0F) << 12) | (((b1 + 256) & 0x3F) << 6) | ((b2 + 256) & 0x3F)))
+            ((i += 2))
+
+            if (((cp >= 0x200B && cp <= 0x200F) || (cp >= 0x20D0 && cp <= 0x20FF) ||
+                 (cp >= 0xFE00 && cp <= 0xFE0F))); then
+                :
+            elif (((cp >= 0x1100 && cp <= 0x115F) || (cp >= 0x2E80 && cp <= 0x303E) ||
+                   (cp >= 0x3041 && cp <= 0x33FF) || (cp >= 0x3400 && cp <= 0x4DBF) ||
+                   (cp >= 0x4E00 && cp <= 0x9FFF) || (cp >= 0xA000 && cp <= 0xA4CF) ||
+                   (cp >= 0xAC00 && cp <= 0xD7A3) || (cp >= 0xF900 && cp <= 0xFAFF) ||
+                   (cp >= 0xFE30 && cp <= 0xFE4F) || (cp >= 0xFF00 && cp <= 0xFF60) ||
+                   (cp >= 0xFFE0 && cp <= 0xFFE6))); then
+                ((width += 2))
+            else
+                ((width++))
+            fi
+
+        elif ((b >= 0xC0)); then
+            printf -v b1 '%d' "'${s:i+1:1}"
+            ((cp = ((b & 0x1F) << 6) | ((b1 + 256) & 0x3F)))
+            ((i += 1))
+            ((cp >= 0x300 && cp <= 0x36F)) || ((width++))
+        fi
+    done
+
+    str_width_out=$width
+}
+
+trim_quotes() {
+    trim_output="${1//\'}"
+    trim_output="${trim_output//\"}"
+    printf "%s" "$trim_output"
+}
+
+strip_sequences() {
+    strip="${1//$'\e['3[0-9]m}"
+    strip="${strip//$'\e['[0-9]m}"
+    strip="${strip//\\e\[[0-9]m}"
+    strip="${strip//$'\e['38\;5\;[0-9]m}"
+    strip="${strip//$'\e['38\;5\;[0-9][0-9]m}"
+    strip="${strip//$'\e['38\;5\;[0-9][0-9][0-9]m}"
+
+    printf '%s\n' "$strip"
+}
+
+# COLORS
+
+set_colors() {
+    c1="$(color "$1")${ascii_bold}"
+    c2="$(color "$2")${ascii_bold}"
+    c3="$(color "$3")${ascii_bold}"
+    c4="$(color "$4")${ascii_bold}"
+    c5="$(color "$5")${ascii_bold}"
+    c6="$(color "$6")${ascii_bold}"
+
+    [[ "$color_text" != "off" ]] && set_text_colors "$@"
+}
+
+set_text_colors() {
+    if [[ "${colors[0]}" == "distro" ]]; then
+        title_color="$(color "$1")"
+        at_color="$reset"
+        underline_color="$reset"
+        subtitle_color="$(color "$2")"
+        colon_color="$reset"
+        info_color="$reset"
+
+        # If the ascii art uses 8 as a color, make the text the fg.
+        ((${1:-1} == 8)) && title_color="$reset"
+        ((${2:-7} == 8)) && subtitle_color="$reset"
+
+        # If the second color is white use the first for the subtitle.
+        ((${2:-7} == 7)) && subtitle_color="$(color "$1")"
+        ((${1:-1} == 7)) && title_color="$reset"
+    else
+        title_color="$(color "${colors[0]}")"
+        at_color="$(color "${colors[1]}")"
+        underline_color="$(color "${colors[2]}")"
+        subtitle_color="$(color "${colors[3]}")"
+        colon_color="$(color "${colors[4]}")"
+        info_color="$(color "${colors[5]}")"
+    fi
+
+    # Bar colors.
+    if [[ "$bar_color_elapsed" == "distro" ]]; then
+        bar_color_elapsed="$(color fg)"
+    else
+        bar_color_elapsed="$(color "$bar_color_elapsed")"
+    fi
+
+    case ${bar_color_total}${1} in
+        distro[736]) bar_color_total=$(color "$1") ;;
+        distro[0-9]) bar_color_total=$(color "$2") ;;
+        *)           bar_color_total=$(color "$bar_color_total") ;;
+    esac
+}
+
+color() {
+    [[ "$no_color" ]] && return
+
+    case $1 in
+        [0-6])    printf '%b\e[3%sm'   "$reset" "$1" ;;
+        7 | "fg") printf '\e[37m%b'    "$reset" ;;
+        *)        printf '\e[38;5;%bm' "$1" ;;
+    esac
+}
+
+# OTHER
+
+stdout() {
+    image_backend="off"
+    no_color=1
+    unset subtitle_color colon_color info_color underline_color bold title_color at_color \
+          text_padding reset color_blocks bar_color_elapsed bar_color_total \
+          c1 c2 c3 c4 c5 c6 c7 c8
+}
+
+err() {
+    err+="$(color 1)[!]${reset} $1
+"
+}
+
+get_full_path() {
+    # This function finds the absolute path from a relative one.
+    # For example "Pictures/Wallpapers" --> "/Users/dylan/Pictures/Wallpapers"
+
+    # If the file exists in the current directory, stop here.
+    [[ -f "${PWD}/${1}" ]] && { printf '%s\n' "${PWD}/${1}"; return; }
+
+    ! cd "${1%/*}" && {
+        err "Error: Directory '${1%/*}' doesn't exist or is inaccessible"
+        err "       Check that the directory exists or try another directory."
+        exit 1
+    }
+
+    local full_dir="${1##*/}"
+
+    # Iterate down a (possible) chain of symlinks.
+    while [[ -L "$full_dir" ]]; do
+        full_dir="$(readlink "$full_dir")"
+        cd "${full_dir%/*}" || exit
+        full_dir="${full_dir##*/}"
+    done
+
+    # Final directory.
+    full_dir="$(pwd -P)/${1/*\/}"
+
+    [[ -e "$full_dir" ]] && printf '%s\n' "$full_dir"
+}
+
+get_user_config() {
+    # --config /path/to/config.conf
+    if [[ -f "$config_file" ]]; then
+        source "$config_file"
+        err "Config: Sourced user config. (${config_file})"
+        return
+
+    elif [[ -f "${XDG_CONFIG_HOME}/neofetch/config.conf" ]]; then
+        source "${XDG_CONFIG_HOME}/neofetch/config.conf"
+        err "Config: Sourced user config.    (${XDG_CONFIG_HOME}/neofetch/config.conf)"
+
+    elif [[ -f "${XDG_CONFIG_HOME}/neofetch/config" ]]; then
+        source "${XDG_CONFIG_HOME}/neofetch/config"
+        err "Config: Sourced user config.    (${XDG_CONFIG_HOME}/neofetch/config)"
+
+    elif [[ -z "$no_config" ]]; then
+        config_file="${XDG_CONFIG_HOME}/neofetch/config.conf"
+
+        # The config file doesn't exist, create it.
+        mkdir -p "${XDG_CONFIG_HOME}/neofetch/"
+        printf '%s\n' "$config" > "$config_file"
+    fi
+}
+
+# LAYOUT EDITOR
+
+# A line that starts a 'print_info' definition, and the only form the editor
+# rewrites: the header alone on its line, closed by a '}' in column 0.
+layout_def_start='^[[:space:]]*(function[[:space:]]+)?print_info([[:space:]]|[(]|[{]|$)'
+layout_def_header='^[[:space:]]*(function[[:space:]]+)?print_info[[:space:]]*([(][)])?[[:space:]]*[{]?[[:space:]]*$'
+
+layout_fail() {
+    printf 'neofetch: %s\n' "$@" >&2
+    return 1
+}
+
+layout_read_block() {
+    # Read the body of the 'print_info()' definition on stdin into
+    # 'block_lines'. Returns 1 when there is none, 2 when its closing '}' is
+    # missing, 3 for an unsupported header, 4 for more than one definition and
+    # 5 when the closing '}' shares its line with other code.
+    local line state=0 defs=0
+    block_lines=()
+
+    while IFS= read -r line || [[ "$line" ]]; do
+        if ((state == 1)); then
+            if [[ "$line" =~ ^\}[[:space:]]*$ ]]; then
+                state=2
+            elif [[ "$line" == "}"* ]]; then
+                return 5
+            else
+                block_lines+=("$line")
+            fi
+            continue
+        fi
+
+        [[ "$line" =~ $layout_def_start ]] || continue
+        ((++defs > 1)) && return 4
+        [[ "$line" =~ $layout_def_header ]] || return 3
+        state=1
+    done
+
+    ((defs)) || return 1
+    ((state == 2)) || return 2
+    return 0
+}
+
+layout_parse_line() {
+    # Set 'parsed_name', 'parsed_label' and 'parsed_shown' from one line of a
+    # 'print_info()' body. Returns 1 for lines to skip (blank lines, braces and
+    # plain comments) and 2 for code the editor can't represent.
+    local line="$1" shown=1
+    local labeled='^info[[:space:]]+"([^"$`\\]*)"[[:space:]]+([a-z_]+)$'
+    local bare='^info[[:space:]]+([a-z_]+)$'
+
+    line="${line#"${line%%[![:space:]]*}"}"
+    if [[ "$line" == "#"* ]]; then
+        shown=0
+        line="${line#\#}"
+        line="${line#"${line%%[![:space:]]*}"}"
+    fi
+    line="${line%"${line##*[![:space:]]}"}"
+    line="${line%;}"
+    line="${line%"${line##*[![:space:]]}"}"
+
+    if [[ "$line" =~ $labeled ]]; then
+        parsed_label="${BASH_REMATCH[1]}"
+        parsed_name="${BASH_REMATCH[2]}"
+    elif [[ "$line" =~ $bare ]]; then
+        parsed_label=""
+        parsed_name="${BASH_REMATCH[1]}"
+    elif ((shown)) && [[ "$line" && "$line" != "{" && "$line" != ":" ]]; then
+        return 2
+    else
+        return 1
+    fi
+
+    parsed_shown=$shown
+    return 0
+}
+
+layout_default_index() {
+    # Print the index of field $1 in the default layout.
+    local i
+    for i in "${!def_name[@]}"; do
+        [[ "${def_name[i]}" == "$1" ]] && { printf '%s\n' "$i"; return 0; }
+    done
+    return 1
+}
+
+layout_has() {
+    local i
+    for i in "${!lay_name[@]}"; do
+        [[ "${lay_name[i]}" == "$1" ]] && return 0
+    done
+    return 1
+}
+
+layout_add() {
+    lay_name+=("$1")
+    lay_label+=("$2")
+    lay_shown+=("$3")
+}
+
+layout_load() {
+    # Load the layout of config file $1 into 'lay_name', 'lay_label' and
+    # 'lay_shown'. Fields it doesn't list are added, hidden, at the end.
+    local line i status
+    def_name=() def_label=()
+    lay_name=() lay_label=() lay_shown=()
+
+    layout_read_block <<< "$config"
+    for line in "${block_lines[@]}"; do
+        layout_parse_line "$line" || continue
+        def_name+=("$parsed_name")
+        def_label+=("$parsed_label")
+    done
+
+    layout_read_block < "$1"
+    status=$?
+    case $status in
+        1) layout_read_block <<< "$config" ;;
+        2) layout_fail "'print_info()' in $1 has no closing '}' at the start of a line." \
+                       "Edit the file by hand instead." ;;
+        3) layout_fail "'print_info()' in $1 must start with 'print_info() {' on its own line." \
+                       "Edit the file by hand instead." ;;
+        4) layout_fail "$1 defines 'print_info()' more than once." \
+                       "Edit the file by hand instead." ;;
+        5) layout_fail "'print_info()' in $1 must end with '}' on its own line." \
+                       "Edit the file by hand instead." ;;
+    esac
+    ((status > 1)) && return 1
+
+    for line in "${block_lines[@]}"; do
+        layout_parse_line "$line"
+        status=$?
+        if ((status == 2)); then
+            layout_fail "'print_info()' in $1 has a line the editor can't represent:" \
+                        "  $(trim "$line")" \
+                        "Only 'info \"Label\" name' lines and comments are supported." \
+                        "Edit the file by hand instead."
+            return 1
+        fi
+        ((status == 1)) && continue
+
+        if ! layout_default_index "$parsed_name" >/dev/null; then
+            # A commented-out field that no longer exists is dropped.
+            ((parsed_shown)) || continue
+            layout_fail "'print_info()' in $1 shows an unknown field: '$parsed_name'." \
+                        "Edit the file by hand instead."
+            return 1
+        fi
+
+        layout_add "$parsed_name" "$parsed_label" "$parsed_shown"
+    done
+
+    for i in "${!def_name[@]}"; do
+        layout_has "${def_name[i]}" || layout_add "${def_name[i]}" "${def_label[i]}" 0
+    done
+}
+
+layout_render() {
+    # Print the layout as a 'print_info()' definition. Hidden lines stay as
+    # comments so they can be shown again later.
+    local i line shown=
+    printf '%s\n' "print_info() {"
+    for i in "${!lay_name[@]}"; do
+        line="info ${lay_name[i]}"
+        [[ "${lay_label[i]}" ]] && line="info \"${lay_label[i]}\" ${lay_name[i]}"
+        ((lay_shown[i])) && shown=1
+        ((lay_shown[i])) || line="# $line"
+        printf '    %s\n' "$line"
+    done
+
+    # A function body needs at least one command.
+    [[ "$shown" ]] || printf '    %s\n' ":"
+    printf '%s\n' "}"
+}
+
+layout_splice() {
+    # Print config file $1 with its 'print_info()' definition replaced by the
+    # edited layout, or with the layout appended when it has none.
+    local line state=0
+
+    while IFS= read -r line || [[ "$line" ]]; do
+        case $state in
+            0)
+                if [[ "$line" =~ $layout_def_start ]]; then
+                    layout_render
+                    state=1
+                    continue
+                fi
+            ;;
+
+            1)
+                [[ "$line" =~ ^\}[[:space:]]*$ ]] && state=2
+                continue
+            ;;
+        esac
+
+        printf '%s\n' "$line"
+    done < "$1"
+
+    ((state)) || { printf '\n'; layout_render; }
+}
+
+layout_shown_lines() {
+    # Print one 'name label' line per shown field, read from a print_info body.
+    local line
+    for line in "${block_lines[@]}"; do
+        layout_parse_line "$line" || continue
+        ((parsed_shown)) && printf '%s %s\n' "$parsed_name" "$parsed_label"
+    done
+}
+
+layout_save() {
+    # Rewrite only the 'print_info()' block of the config file. The new file
+    # is checked before it replaces the old one, and a backup is kept.
+    local file="$layout_file" tmp expected actual line
+    local backup="${layout_file}.bak"
+
+    tmp="$(mktemp "${TMPDIR:-/tmp}/neofetch-layout.XXXXXX")" ||
+        { layout_msg="Couldn't create a temporary file; nothing was saved."; return 1; }
+
+    layout_splice "$file" > "$tmp"
+
+    block_lines=()
+    while IFS= read -r line; do block_lines+=("$line"); done < <(layout_render)
+    expected="$(layout_shown_lines)"
+
+    # Read the layout back from the new file as Bash sees it.
+    actual="$(
+        print_info() { :; }
+        source "$tmp" >/dev/null 2>&1
+        declare -f print_info
+    )"
+    block_lines=()
+    while IFS= read -r line; do block_lines+=("$line"); done <<< "$actual"
+    actual="$(layout_shown_lines)"
+
+    if ! bash -n "$tmp" 2>/dev/null || [[ "$actual" != "$expected" ]]; then
+        rm -f "$tmp"
+        layout_msg="The edited config didn't produce the new layout; nothing was saved."
+        return 1
+    fi
+
+    if ! cp -p "$file" "$backup"; then
+        rm -f "$tmp"
+        layout_msg="Couldn't write the backup ${backup}; nothing was saved."
+        return 1
+    fi
+
+    # Write in place to keep the file's permissions and any symlink.
+    if ! cat "$tmp" > "$file"; then
+        if cat "$backup" > "$file"; then
+            layout_msg="Couldn't write ${file}; it was restored from ${backup}."
+        else
+            layout_msg="Couldn't write ${file}; restore it from ${backup}."
+        fi
+        rm -f "$tmp"
+        return 1
+    fi
+
+    rm -f "$tmp"
+    return 0
+}
+
+layout_swap() {
+    # Swap lines $1 and $2. Returns 1 when $2 is out of range.
+    local a=$1 b=$2 t
+    ((b >= 0 && b < ${#lay_name[@]})) || return 1
+
+    t="${lay_name[a]}";  lay_name[a]="${lay_name[b]}";   lay_name[b]="$t"
+    t="${lay_label[a]}"; lay_label[a]="${lay_label[b]}"; lay_label[b]="$t"
+    t="${lay_shown[a]}"; lay_shown[a]="${lay_shown[b]}"; lay_shown[b]="$t"
+}
+
+layout_rename() {
+    local i=$1 input
+
+    case ${lay_name[i]} in
+        title | underline | cols)
+            layout_msg="The '${lay_name[i]}' line has no label."
+            return
+        ;;
+    esac
+
+    printf '\e[?25h\nNew label for %s (empty keeps "%s"): ' "${lay_name[i]}" "${lay_label[i]}"
+    IFS= read -r input
+    printf '\e[?25l'
+
+    if [[ -z "$input" ]]; then
+        return
+    elif [[ "$input" == *[\"\$\`\\]* ]]; then
+        layout_msg="Labels can't contain \", \$, \` or \\."
+    else
+        lay_label[i]="$input"
+        layout_changed=1
+    fi
+}
+
+layout_draw() {
+    local i mark label
+    printf '\e[H\e[2J'
+    printf 'Neofetch layout editor: %s\n\n' "$layout_file"
+
+    for i in "${!lay_name[@]}"; do
+        mark="[ ]"
+        ((lay_shown[i])) && mark="[x]"
+
+        case ${lay_name[i]} in
+            title)     label="user@host" ;;
+            underline) label="----------" ;;
+            cols)      label="(color blocks)" ;;
+            *)         label="${lay_label[i]}" ;;
+        esac
+
+        if ((i == layout_cursor)); then
+            printf '\e[7m> %s %-18s %-12s\e[m\n' "$mark" "$label" "${lay_name[i]}"
+        else
+            printf '  %s %-18s %-12s\n' "$mark" "$label" "${lay_name[i]}"
+        fi
+    done
+
+    printf '\n%s\n%s\n' \
+        "up/down, k/j: select   K/J: move line   space: show/hide   enter: rename" \
+        "s: save   q: quit"
+    [[ "$layout_msg" ]] && printf '\n%s\n' "$layout_msg"
+}
+
+layout_key() {
+    # Read one key press into 'key'; arrow keys become 'up' and 'down'.
+    local rest
+    key=
+    IFS= read -rsn1 key || return 1
+
+    if [[ "$key" == $'\e' ]]; then
+        IFS= read -rsn2 rest
+        case $rest in
+            "[A" | "OA") key="up" ;;
+            "[B" | "OB") key="down" ;;
+            *) key="none" ;;
+        esac
+    fi
+    return 0
+}
+
+layout_leave() {
+    printf '\e[?25h'
+    [[ -t 1 ]] && printf '\e[?1049l'
+}
+
+customize_layout() {
+    # 'neofetch --customize': choose, order and label the info lines, then
+    # save them to the 'print_info()' block of the config file.
+    local key layout_cursor=0 layout_changed= layout_msg= quit_armed= saved=
+
+    # Field names are lowercase; match them exactly.
+    shopt -u nocasematch
+
+    if [[ "$no_config" == on || "$config_off" == on ]]; then
+        layout_fail "--customize edits the config file; it can't be used with --no_config or '--config none'."
+        return 1
+    elif [[ -f "$config_file" ]]; then
+        layout_file="$config_file"
+    elif [[ -f "${XDG_CONFIG_HOME}/neofetch/config.conf" ]]; then
+        layout_file="${XDG_CONFIG_HOME}/neofetch/config.conf"
+    elif [[ -f "${XDG_CONFIG_HOME}/neofetch/config" ]]; then
+        layout_file="${XDG_CONFIG_HOME}/neofetch/config"
+    else
+        layout_fail "No config file to edit."
+        return 1
+    fi
+
+    layout_load "$layout_file" || return 1
+
+    trap 'layout_leave' EXIT
+    trap 'layout_leave; trap - INT; kill -INT $$' INT
+    [[ -t 1 ]] && printf '\e[?1049h'
+    printf '\e[?25l'
+
+    while :; do
+        layout_draw
+        layout_key || break
+
+        [[ "$key" == q ]] || quit_armed=
+        layout_msg=
+
+        case $key in
+            up | k)   ((layout_cursor > 0)) && ((layout_cursor--)) ;;
+            down | j) ((layout_cursor < ${#lay_name[@]} - 1)) && ((layout_cursor++)) ;;
+
+            K)
+                layout_swap "$layout_cursor" "$((layout_cursor - 1))" &&
+                    { ((layout_cursor--)); layout_changed=1; }
+            ;;
+
+            J)
+                layout_swap "$layout_cursor" "$((layout_cursor + 1))" &&
+                    { ((layout_cursor++)); layout_changed=1; }
+            ;;
+
+            " ")
+                lay_shown[layout_cursor]=$((1 - lay_shown[layout_cursor]))
+                layout_changed=1
+            ;;
+
+            "") layout_rename "$layout_cursor" ;;
+
+            s)
+                layout_save && { saved=1; break; }
+            ;;
+
+            q)
+                [[ -z "$layout_changed" || "$quit_armed" ]] && break
+                quit_armed=1
+                layout_msg="Unsaved changes: press q again to discard them, or s to save."
+            ;;
+        esac
+    done
+
+    layout_leave
+    trap - EXIT INT
+
+    if [[ "$saved" ]]; then
+        printf '%s\n' "Saved the layout to ${layout_file} (backup: ${layout_file}.bak)."
+    else
+        printf '%s\n' "No changes were saved."
+    fi
+}
+
+# FINISH UP
+
+usage() { printf "%s" "\
+Usage: neofetch func_name --option \"value\" --option \"value\"
+
+Neofetch is a CLI system information tool for macOS written in BASH.
+Neofetch displays information about your Mac next to the macOS
+logo or any ASCII file of your choice.
+
+NOTE: Every launch flag has a config option.
+
+NOTE: The config file is a Bash script that Neofetch runs as code.
+Only use config files you trust.
+
+Options:
+
+INFO:
+    func_name                   Specify a function name (second part of info() from config) to
+                                quickly display only that function's information.
+
+                                Example: neofetch uptime --uptime_shorthand tiny
+
+                                Example: neofetch uptime disk wm memory
+
+                                This can be used in bars and scripts like so:
+
+                                memory=\"\$(neofetch memory)\"; memory=\"\${memory##*: }\"
+
+                                For multiple outputs at once (each line of info in an array):
+
+                                IFS=\$'\\n' read -d \"\" -ra info < <(neofetch memory uptime wm)
+
+                                info=(\"\${info[@]##*: }\")
+
+                                Fields: title, distro, model, kernel, uptime, packages,
+                                shell, resolution, de, wm, wm_theme, term, term_font,
+                                cpu, gpu, memory, gpu_driver, disk, battery, local_ip,
+                                users, locale. Layout rows: underline, cols.
+
+    --disable infoname          Allows you to disable an info line from appearing
+                                in the output. 'infoname' is the function name from the
+                                'print_info()' function inside the config file.
+                                For example: 'info \"Memory\" memory' would be '--disable memory'
+
+                                NOTE: You can supply multiple args. eg. 'neofetch --disable cpu gpu'
+
+    --title_fqdn on/off         Hide/Show Fully Qualified Domain Name in title.
+    --package_managers on/off   Hide/Show Package Manager names . (on, tiny, off)
+    --os_arch on/off            Hide/Show OS architecture.
+    --cpu_brand on/off          Enable/Disable CPU brand in output.
+    --cpu_cores type            Whether or not to display the number of CPU cores
+                                Possible values: logical, physical, off
+    --cpu_speed on/off          Hide/Show cpu speed (Intel Macs).
+    --distro_shorthand on/off   Shorten the output of the OS name (on, tiny, off)
+    --kernel_shorthand on/off   Shorten the output of kernel
+    --uptime_shorthand on/off   Shorten the output of uptime (on, tiny, off)
+    --refresh_rate on/off       Whether to display the refresh rate of each monitor
+    --gpu_brand on/off          Enable/Disable GPU brand in output. (AMD/NVIDIA/Intel)
+    --shell_path on/off         Enable/Disable showing \$SHELL path
+    --shell_version on/off      Enable/Disable showing \$SHELL version
+    --disk_show value           Which disks to display.
+                                Possible values: '/', '/dev/diskXsY', '/path/to/mount point'
+
+                                NOTE: Multiple values can be given. (--disk_show '/' '/Volumes/Data')
+
+    --disk_subtitle type        What information to append to the Disk subtitle.
+                                Takes: name, mount, dir, none
+
+                                'name' shows the disk's name (/dev/disk3s1s1, etc)
+
+                                'mount' shows the disk's mount point (/, /Volumes/Backup, etc)
+
+                                'dir' shows the basename of the disks's path. (/, Backup, etc)
+
+                                'none' shows only 'Disk' or the configured title.
+
+    --disk_percent on/off       Hide/Show disk percent.
+
+    --ip_interface value        Interface(s) to use for local IP
+    --memory_percent on/off     Display memory percentage.
+    --memory_unit kib/mib/gib   Memory output unit.
+
+TEXT FORMATTING:
+    --colors x x x x x x        Changes the text colors in this order:
+                                title, @, underline, subtitle, colon, info
+    --underline on/off          Enable/Disable the underline.
+    --underline_char char       Character to use when underlining title
+    --bold on/off               Enable/Disable bold text
+    --separator string          Changes the default ':' separator to the specified string.
+
+COLOR BLOCKS:
+    --color_blocks on/off       Enable/Disable the color blocks
+    --col_offset auto/num       Left-padding of color blocks
+    --block_width num           Width of color blocks in spaces
+    --block_height num          Height of color blocks in lines
+    --block_range num num       Range of colors to print as blocks
+
+BARS:
+    --bar_char 'elapsed char' 'total char'
+                                Characters to use when drawing bars.
+    --bar_border on/off         Whether or not to surround the bar with '[]'
+    --bar_length num            Length in spaces to make the bars.
+    --bar_colors num num        Colors to make the bar.
+                                Set in this order: elapsed, total
+    --memory_display mode       Bar mode.
+                                Possible values: bar, infobar, barinfo, off
+    --battery_display mode      Bar mode.
+                                Possible values: bar, infobar, barinfo, off
+    --disk_display mode         Bar mode.
+                                Possible values: bar, infobar, barinfo, perc, off
+
+LOGO:
+    --backend ascii/off         Show the ascii logo or nothing at all.
+    --source source             Which ascii art to use.
+                                Possible values: 'auto', '/path/to/ascii', 'command output'
+    --ascii source              Shortcut to use the ascii logo with a custom source.
+
+                                NEW: neofetch --ascii \"\$(fortune | cowsay -W 30)\"
+
+    --off                       Shortcut to use 'off' backend (Disable ascii art).
+
+ASCII:
+    --ascii_colors x x x x x x  Colors to print the ascii art
+    --ascii_distro name         Which bundled ascii art to print: 'macos' or 'mac_small'.
+    --ascii_bold on/off         Whether or not to bold the ascii logo.
+    -L, --logo                  Hide the info text and only show the ascii logo.
+
+    --gap num                   Gap between logo and text.
+
+                                NOTE: --gap can take a negative value which will move the text
+                                closer to the left side.
+
+OTHER:
+    --config /path/to/config    Specify a path to a custom config file
+    --config none               Launch the script without a config file
+    --no_config                 Don't create the user config file.
+    --print_config              Print the default config file to stdout.
+    --customize                 Open a menu to show/hide, reorder and rename the info lines.
+                                Saving rewrites only the 'print_info()' function of the
+                                config file and keeps a copy in '<config>.bak'.
+                                Keys: up/down or k/j select, K/J move, space show/hide,
+                                enter rename, s save, q quit.
+    --stdout                    Turn off all colors and disables the ASCII logo.
+    --json                      Print the information as a JSON object. Keys are the
+                                info labels (e.g. \"OS\", \"Disk (/)\") plus \"Version\".
+                                All values are strings. Unlabelled lines and fields
+                                that could not be detected are left out.
+    --help                      Print this text and exit
+    --version                   Show neofetch version
+    -v                          Display error messages.
+    -vv                         Display a verbose log for error reporting.
+
+DEVELOPER:
+    --gen-man                   Generate a manpage for Neofetch in your PWD. (Requires GNU help2man)
+
+
+Report bugs to https://github.com/dylanaraps/neofetch/issues
+
+"
+exit 1
+}
+
+reject_removed_options() {
+    # Public IP lookup, song information and image display were removed. Fail
+    # loudly instead of silently ignoring scripts that still ask for them.
+    local arg prev
+    for arg; do
+        if [[ "$prev" == "--backend" && "$arg" != "ascii" && "$arg" != "off" ]]; then
+            printf '%s\n' \
+                "neofetch: '--backend $arg' is no longer supported: image display has been removed." \
+                "neofetch: use '--backend ascii' or '--backend off'." >&2
+            exit 1
+        fi
+        prev="$arg"
+
+        case $arg in
+            "--ip_host" | "--ip_timeout" | "public_ip")
+                printf '%s\n' \
+                    "neofetch: '$arg' is no longer supported: public IP lookup has been removed." \
+                    "neofetch: use 'local_ip' / '--ip_interface' for local addresses." >&2
+                exit 1
+            ;;
+
+            "--caca" | "--catimg" | "--chafa" | "--jp2a" | "--iterm2" | "--kitty" | "--pot" |\
+            "--pixterm" | "--sixel" | "--termpix" | "--viu" | "--w3m" | "--ueberzug" |\
+            "--tycat" | "--image_size" | "--size" | "--catimg_size" | "--crop_mode" |\
+            "--crop_offset" | "--xoffset" | "--yoffset" | "--bg_color" | "--background_color" |\
+            "--loop" | "--clean")
+                printf '%s\n' \
+                    "neofetch: '$arg' is no longer supported: image display has been removed." \
+                    "neofetch: only the ascii macOS logo (or a custom ascii file) is shown." >&2
+                exit 1
+            ;;
+
+            "--song_format" | "--song_shorthand" | "--music_player" | "song")
+                printf '%s\n' \
+                    "neofetch: '$arg' is no longer supported: song information has been removed." >&2
+                exit 1
+            ;;
+        esac
+    done
+}
+
+get_args() {
+    reject_removed_options "$@"
+
+    # Check the commandline flags early for '--config'.
+    [[ "$*" != *--config* && "$*" != *--no_config* ]] && get_user_config
+
+    while [[ "$1" ]]; do
+        case $1 in
+            # Info
+            "--title_fqdn") title_fqdn="$2" ;;
+            "--package_managers") package_managers="$2" ;;
+            "--os_arch") os_arch="$2" ;;
+            "--cpu_cores") cpu_cores="$2" ;;
+            "--cpu_speed") cpu_speed="$2" ;;
+            "--distro_shorthand") distro_shorthand="$2" ;;
+            "--kernel_shorthand") kernel_shorthand="$2" ;;
+            "--uptime_shorthand") uptime_shorthand="$2" ;;
+            "--cpu_brand") cpu_brand="$2" ;;
+            "--gpu_brand") gpu_brand="$2" ;;
+            "--refresh_rate") refresh_rate="$2" ;;
+            "--shell_path") shell_path="$2" ;;
+            "--shell_version") shell_version="$2" ;;
+            "--ip_interface")
+                unset local_ip_interface
+                for arg in "$@"; do
+                    case "$arg" in
+                        "--ip_interface") ;;
+                        "-"*) break ;;
+                        *) local_ip_interface+=("$arg") ;;
+                    esac
+                done
+            ;;
+
+            "--memory_percent") memory_percent="$2" ;;
+            "--memory_unit") memory_unit="$2" ;;
+
+            "--disk_subtitle") disk_subtitle="$2" ;;
+            "--disk_percent")  disk_percent="$2" ;;
+            "--disk_show")
+                unset disk_show
+                for arg in "$@"; do
+                    case $arg in
+                        "--disk_show") ;;
+                        "-"*) break ;;
+                        *) disk_show+=("$arg") ;;
+                    esac
+                done
+            ;;
+
+            "--disable")
+                for func in "$@"; do
+                    case $func in
+                        "--disable") continue ;;
+                        "-"*) break ;;
+                        *)
+                            ((bash_version >= 4)) && func="${func,,}"
+                            unset -f "get_$func"
+                        ;;
+                    esac
+                done
+            ;;
+
+            # Text Colors
+            "--colors")
+                unset colors
+                for arg in "$2" "$3" "$4" "$5" "$6" "$7"; do
+                    case $arg in
+                        "-"*) break ;;
+                        *) colors+=("$arg") ;;
+                    esac
+                done
+                colors+=(7 7 7 7 7 7)
+            ;;
+
+            # Text Formatting
+            "--underline") underline_enabled="$2" ;;
+            "--underline_char") underline_char="$2" ;;
+            "--bold") bold="$2" ;;
+            "--separator") separator="$2" ;;
+
+            # Color Blocks
+            "--color_blocks") color_blocks="$2" ;;
+            "--block_range") block_range=("$2" "$3") ;;
+            "--block_width") block_width="$2" ;;
+            "--block_height") block_height="$2" ;;
+            "--col_offset") col_offset="$2" ;;
+
+            # Bars
+            "--bar_char")
+                bar_char_elapsed="$2"
+                bar_char_total="$3"
+            ;;
+
+            "--bar_border") bar_border="$2" ;;
+            "--bar_length") bar_length="$2" ;;
+            "--bar_colors")
+                bar_color_elapsed="$2"
+                bar_color_total="$3"
+            ;;
+
+            "--memory_display") memory_display="$2" ;;
+            "--battery_display") battery_display="$2" ;;
+            "--disk_display") disk_display="$2" ;;
+
+            # Logo
+            "--backend") image_backend="$2" ;;
+            "--source") image_source="$2" ;;
+            "--ascii" | "--off")
+                image_backend="${1/--}"
+                case $2 in
+                    "-"* | "") ;;
+                    *) image_source="$2" ;;
+                esac
+            ;;
+
+            "--gap") gap="$2" ;;
+
+            "--ascii_colors")
+                unset ascii_colors
+                for arg in "$2" "$3" "$4" "$5" "$6" "$7"; do
+                    case $arg in
+                        "-"*) break ;;
+                        *) ascii_colors+=("$arg")
+                    esac
+                done
+                ascii_colors+=(7 7 7 7 7 7)
+            ;;
+
+            "--ascii_distro")
+                image_backend="ascii"
+                ascii_distro="$2"
+            ;;
+
+            "--ascii_bold") ascii_bold="$2" ;;
+            "--logo" | "-L")
+                image_backend="ascii"
+                print_info() { record raw "" '\n'; }
+            ;;
+
+            # Other
+            "--config")
+                case $2 in
+                    "none" | "off" | "") config_off="on" ;;
+                    *)
+                        config_file="$(get_full_path "$2")"
+                        get_user_config
+                    ;;
+                esac
+            ;;
+            "--no_config") no_config="on" ;;
+            "--customize") customize="on" ;;
+            "--stdout") stdout="on" ;;
+            "-v") verbose="on" ;;
+            "--print_config") printf '%s\n' "$config"; exit ;;
+            "-vv") set -x; verbose="on" ;;
+            "--help") usage ;;
+            "--version")
+                printf '%s\n' "Neofetch $version"
+                exit 1
+            ;;
+            "--gen-man")
+                help2man -n "A fast, highly customizable system info script for macOS" \
+                          -N ./neofetch -o neofetch.1
+                exit 1
+            ;;
+
+            "--json") json="on" ;;
+        esac
+
+        shift
+    done
+}
+
+get_simple() {
+    # 'neofetch uptime memory' prints just those fields, without art or colors.
+    local -a fields
+    while [[ "$1" ]]; do
+        is_field "$1" && fields+=("$1")
+        shift
+    done
+
+    ((${#fields[@]})) || return 1
+
+    prefetch_displays "${fields[*]}"
+    check_deferral
+    get_distro
+    stdout
+    for field in "${fields[@]}"; do
+        info "$field" "$field"
+    done
+    resolve_deferred
+}
+
+get_distro_ascii() {
+    # Only the macOS artwork is bundled. Any other name falls back to the
+    # macOS logo, as neofetch always did for unknown names on Darwin.
+    case $(trim "$ascii_distro") in
+        "mac"*"_small")
+            set_colors 2 3 1 5 4
+            read -rd '' ascii_data <<'EOF'
+${c1}       .:'
+    _ :'_
+${c2} .'`_`-'_``.
+:________.-'
+${c3}:_______:
+:_______:
+${c4} :_______`-;
+${c5}  `._.-._.'
+EOF
+        ;;
+
+        "mac"* | "Darwin")
+            set_colors 2 3 1 1 5 4
+            read -rd '' ascii_data <<'EOF'
+${c1}                    c.'
+                 ,xNMM.
+               .OMMMMo
+               lMM"
+     .;loddo:.  .olloddol;.
+   cKMMMMMMMMMMNWMMMMMMMMMM0:
+${c2} .KMMMMMMMMMMMMMMMMMMMMMMMWd.
+ XMMMMMMMMMMMMMMMMMMMMMMMX.
+${c3};MMMMMMMMMMMMMMMMMMMMMMMM:
+:MMMMMMMMMMMMMMMMMMMMMMMM:
+${c4}.MMMMMMMMMMMMMMMMMMMMMMMMX.
+ kMMMMMMMMMMMMMMMMMMMMMMMMWd.
+ ${c5}'XMMMMMMMMMMMMMMMMMMMMMMMMMMk
+  'XMMMMMMMMMMMMMMMMMMMMMMMMK.
+    ${c6}kMMMMMMMMMMMMMMMMMMMMMMd
+     ;KMMMMMMMWXXWMMMMMMMk.
+       "cooc*"    "*coo'"
+EOF
+        ;;
+
+        *)
+            err "Ascii: No bundled art named '$ascii_distro', using the macOS logo."
+            set_colors 2 3 1 1 5 4
+            read -rd '' ascii_data <<'EOF'
+${c1}                    c.'
+                 ,xNMM.
+               .OMMMMo
+               lMMM"
+     .;loddo:.  .olloddol;.
+   cKMMMMMMMMMMNWMMMMMMMMMM0:
+${c2} .KMMMMMMMMMMMMMMMMMMMMMMMWd.
+ XMMMMMMMMMMMMMMMMMMMMMMMX.
+${c3};MMMMMMMMMMMMMMMMMMMMMMMM:
+:MMMMMMMMMMMMMMMMMMMMMMMM:
+${c4}.MMMMMMMMMMMMMMMMMMMMMMMMX.
+ kMMMMMMMMMMMMMMMMMMMMMMMMWd.
+ ${c5}'XMMMMMMMMMMMMMMMMMMMMMMMMMMk
+  'XMMMMMMMMMMMMMMMMMMMMMMMMK.
+    ${c6}kMMMMMMMMMMMMMMMMMMMMMMd
+     ;KMMMMMMMWXXWMMMMMMMk.
+       "cooc*"    "*coo'"
+EOF
+        ;;
+    esac
+
+    # Overwrite distro colors if '$ascii_colors' doesn't
+    # equal 'distro'.
+    [[ ${ascii_colors[0]} != distro ]] && {
+        color_text=off
+        set_colors "${ascii_colors[@]}"
+    }
+}
+
+main() {
+    cache_uname
+    require_macos
+    get_macos_version
+
+    # Remember the built-in display detectors before any config can override
+    # them (see check_deferral).
+    builtin_display_funcs="$(declare -f get_gpu get_resolution)"
+
+    # Load default config.
+    eval "$config"
+
+    get_args "$@"
+    if [[ $customize == on ]]; then
+        customize_layout
+        return
+    fi
+    [[ $verbose != on ]] && exec 2>/dev/null
+
+    # Collect: run the user's print_info() to record every field.
+    if [[ $json == on ]]; then
+        stdout
+        print_info_body="$(declare -f print_info)"
+        prefetch_displays "$print_info_body"
+        check_deferral "$print_info_body"
+        print_info 2>/dev/null
+        resolve_deferred 2>/dev/null
+        render_json
+        return 0
+    fi
+
+    if get_simple "$@"; then
+        render_text
+        return 0
+    fi
+
+    print_info_body="$(declare -f print_info)"
+    prefetch_displays "$print_info_body"
+    check_deferral "$print_info_body"
+    get_distro
+    get_bold
+    get_distro_ascii
+    [[ $stdout == on ]] && stdout
+
+    print_info
+    resolve_deferred
+
+    # Render: draw the logo, then the recorded lines next to it.
+    [[ $stdout != on ]] && terminal_setup
+
+    draw_logo
+    render_text
+    dynamic_prompt
+
+    # Add neofetch info to verbose output.
+    err "Neofetch command: $0 $*"
+    err "Neofetch version: $version"
+
+    [[ $verbose == on ]] && printf '%b\033[m' "$err" >&2
+
+    return 0
+}
+
+main "$@"

@@ -1,0 +1,260 @@
+.\" Generated from "neofetch --help". Keep in sync with usage() in neofetch.
+.TH NEOFETCH "1" "October 2026" "Neofetch 7.1.0" "User Commands"
+.SH NAME
+Neofetch \- A fast, highly customizable system info script for macOS
+.SH SYNOPSIS
+.B neofetch
+\fI\,func_name \-\-option "value" \-\-option "value"\/\fR
+.SH DESCRIPTION
+Neofetch is a CLI system information tool for macOS written in BASH.
+Neofetch displays information about your Mac next to the macOS
+logo or any ASCII file of your choice.
+.PP
+NOTE: Every launch flag has a config option.
+.PP
+NOTE: The config file is a Bash script that Neofetch runs as code.
+Only use config files you trust.
+.SH OPTIONS
+.SS "INFO:"
+.TP
+func_name
+Specify a function name (second part of info() from config) to
+quickly display only that function's information.
+.IP
+Example: neofetch uptime \-\-uptime_shorthand tiny
+.IP
+Example: neofetch uptime disk wm memory
+.IP
+This can be used in bars and scripts like so:
+.IP
+memory="$(neofetch memory)"; memory="${memory##*: }"
+.IP
+For multiple outputs at once (each line of info in an array):
+.IP
+IFS=$'\en' read \-d "" \-ra info < <(neofetch memory uptime wm)
+.IP
+info=("${info[@]##*: }")
+.IP
+Fields: title, distro, model, kernel, uptime, packages,
+shell, resolution, de, wm, wm_theme, term, term_font,
+cpu, gpu, memory, gpu_driver, disk, battery, local_ip,
+users, locale. Layout rows: underline, cols.
+.TP
+\fB\-\-disable\fR infoname
+Allows you to disable an info line from appearing
+in the output. 'infoname' is the function name from the
+\&'print_info()' function inside the config file.
+For example: 'info "Memory" memory' would be '\-\-disable memory'
+.IP
+NOTE: You can supply multiple args. eg. 'neofetch \-\-disable cpu gpu'
+.TP
+\fB\-\-title_fqdn\fR on/off
+Hide/Show Fully Qualified Domain Name in title.
+.TP
+\fB\-\-package_managers\fR on/off
+Hide/Show Package Manager names . (on, tiny, off)
+.TP
+\fB\-\-os_arch\fR on/off
+Hide/Show OS architecture.
+.TP
+\fB\-\-cpu_brand\fR on/off
+Enable/Disable CPU brand in output.
+.TP
+\fB\-\-cpu_cores\fR type
+Whether or not to display the number of CPU cores
+Possible values: logical, physical, off
+.TP
+\fB\-\-cpu_speed\fR on/off
+Hide/Show cpu speed (Intel Macs).
+.TP
+\fB\-\-distro_shorthand\fR on/off
+Shorten the output of the OS name (on, tiny, off)
+.TP
+\fB\-\-kernel_shorthand\fR on/off
+Shorten the output of kernel
+.TP
+\fB\-\-uptime_shorthand\fR on/off
+Shorten the output of uptime (on, tiny, off)
+.TP
+\fB\-\-refresh_rate\fR on/off
+Whether to display the refresh rate of each monitor
+.TP
+\fB\-\-gpu_brand\fR on/off
+Enable/Disable GPU brand in output. (AMD/NVIDIA/Intel)
+.TP
+\fB\-\-shell_path\fR on/off
+Enable/Disable showing $SHELL path
+.TP
+\fB\-\-shell_version\fR on/off
+Enable/Disable showing $SHELL version
+.TP
+\fB\-\-disk_show\fR value
+Which disks to display.
+Possible values: '/', '/dev/diskXsY', '/path/to/mount point'
+.IP
+NOTE: Multiple values can be given. (\-\-disk_show '/' '/Volumes/Data')
+.TP
+\fB\-\-disk_subtitle\fR type
+What information to append to the Disk subtitle.
+Takes: name, mount, dir, none
+.IP
+\&'name' shows the disk's name (/dev/disk3s1s1, etc)
+.IP
+\&'mount' shows the disk's mount point (/, /Volumes/Backup, etc)
+.IP
+\&'dir' shows the basename of the disks's path. (/, Backup, etc)
+.IP
+\&'none' shows only 'Disk' or the configured title.
+.TP
+\fB\-\-disk_percent\fR on/off
+Hide/Show disk percent.
+.TP
+\fB\-\-ip_interface\fR value
+Interface(s) to use for local IP
+.TP
+\fB\-\-memory_percent\fR on/off
+Display memory percentage.
+.TP
+\fB\-\-memory_unit\fR kib/mib/gib
+Memory output unit.
+.SS "TEXT FORMATTING:"
+.TP
+\fB\-\-colors\fR x x x x x x
+Changes the text colors in this order:
+title, @, underline, subtitle, colon, info
+.TP
+\fB\-\-underline\fR on/off
+Enable/Disable the underline.
+.TP
+\fB\-\-underline_char\fR char
+Character to use when underlining title
+.TP
+\fB\-\-bold\fR on/off
+Enable/Disable bold text
+.TP
+\fB\-\-separator\fR string
+Changes the default ':' separator to the specified string.
+.SS "COLOR BLOCKS:"
+.TP
+\fB\-\-color_blocks\fR on/off
+Enable/Disable the color blocks
+.TP
+\fB\-\-col_offset\fR auto/num
+Left\-padding of color blocks
+.TP
+\fB\-\-block_width\fR num
+Width of color blocks in spaces
+.TP
+\fB\-\-block_height\fR num
+Height of color blocks in lines
+.TP
+\fB\-\-block_range\fR num num
+Range of colors to print as blocks
+.SS "BARS:"
+.TP
+\fB\-\-bar_char\fR \&'elapsed char' \&'total char'
+Characters to use when drawing bars.
+.TP
+\fB\-\-bar_border\fR on/off
+Whether or not to surround the bar with '[]'
+.TP
+\fB\-\-bar_length\fR num
+Length in spaces to make the bars.
+.TP
+\fB\-\-bar_colors\fR num num
+Colors to make the bar.
+Set in this order: elapsed, total
+.TP
+\fB\-\-memory_display\fR mode
+Bar mode.
+Possible values: bar, infobar, barinfo, off
+.TP
+\fB\-\-battery_display\fR mode
+Bar mode.
+Possible values: bar, infobar, barinfo, off
+.TP
+\fB\-\-disk_display\fR mode
+Bar mode.
+Possible values: bar, infobar, barinfo, perc, off
+.SS "LOGO:"
+.TP
+\fB\-\-backend\fR ascii/off
+Show the ascii logo or nothing at all.
+.TP
+\fB\-\-source\fR source
+Which ascii art to use.
+Possible values: 'auto', '/path/to/ascii', 'command output'
+.TP
+\fB\-\-ascii\fR source
+Shortcut to use the ascii logo with a custom source.
+.IP
+NEW: neofetch \-\-ascii "$(fortune | cowsay \-W 30)"
+.TP
+\fB\-\-off\fR
+Shortcut to use 'off' backend (Disable ascii art).
+.SS "ASCII:"
+.TP
+\fB\-\-ascii_colors\fR x x x x x x
+Colors to print the ascii art
+.TP
+\fB\-\-ascii_distro\fR name
+Which bundled ascii art to print: 'macos' or 'mac_small'.
+.TP
+\fB\-\-ascii_bold\fR on/off
+Whether or not to bold the ascii logo.
+.TP
+\fB\-L,\fR \fB\-\-logo\fR
+Hide the info text and only show the ascii logo.
+.TP
+\fB\-\-gap\fR num
+Gap between logo and text.
+.IP
+NOTE: \-\-gap can take a negative value which will move the text
+closer to the left side.
+.SS "OTHER:"
+.TP
+\fB\-\-config\fR /path/to/config
+Specify a path to a custom config file
+.TP
+\fB\-\-config\fR none
+Launch the script without a config file
+.TP
+\fB\-\-no_config\fR
+Don't create the user config file.
+.TP
+\fB\-\-print_config\fR
+Print the default config file to stdout.
+.TP
+\fB\-\-customize\fR
+Open a menu to show/hide, reorder and rename the info lines.
+Saving rewrites only the 'print_info()' function of the
+config file and keeps a copy in '<config>.bak'.
+Keys: up/down or k/j select, K/J move, space show/hide,
+enter rename, s save, q quit.
+.TP
+\fB\-\-stdout\fR
+Turn off all colors and disables the ASCII logo.
+.TP
+\fB\-\-json\fR
+Print the information as a JSON object. Keys are the
+info labels (e.g. "OS", "Disk (/)") plus "Version".
+All values are strings. Unlabelled lines and fields
+that could not be detected are left out.
+.TP
+\fB\-\-help\fR
+Print this text and exit
+.TP
+\fB\-\-version\fR
+Show neofetch version
+.TP
+\fB\-v\fR
+Display error messages.
+.TP
+\fB\-vv\fR
+Display a verbose log for error reporting.
+.SS "DEVELOPER:"
+.TP
+\fB\-\-gen\-man\fR
+Generate a manpage for Neofetch in your PWD. (Requires GNU help2man)
+.SH "REPORTING BUGS"
+Report bugs to https://github.com/dylanaraps/neofetch/issues
